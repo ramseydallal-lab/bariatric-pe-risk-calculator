@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PE Risk Calculator - Jefferson Health</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0066cc 0%, #004999 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 200px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .version {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: #f5f5f5;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e8e8e8;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #0066cc;
+            color: #0066cc;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #0066cc 0%, #004999 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+        }
+
+        .risk-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #0066cc;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .risk-category {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .risk-low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .risk-elevated {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .risk-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .risk-very-high {
+            background: #f5c6cb;
+            color: #721c24;
+            font-weight: bold;
+        }
+
+        .natural-frequency {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            margin: 15px 0;
+        }
+
+        .debug-output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .debug-output h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .recommendation {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+            margin-top: 20px;
+        }
+
+        .recommendation h3 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .recommendation-strong {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+
+        .recommendation-strong h3 {
+            color: #c62828;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .disclaimer-toggle {
+            cursor: pointer;
+            color: #0066cc;
+            text-decoration: underline;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .disclaimer-full {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .disclaimer-full.show {
+            display: block;
+        }
+
+        .banner {
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .tab {
+                font-size: 12px;
+                padding: 12px 8px;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <svg class="logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+                <rect width="200" height="60" fill="white" rx="5"/>
+                <text x="100" y="30" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#0066cc" text-anchor="middle">Jefferson</text>
+                <text x="100" y="48" font-family="Arial, sans-serif" font-size="14" fill="#004999" text-anchor="middle">Health</text>
+            </svg>
+            <h1>PE Risk Calculator</h1>
+            <p>30-Day Post-Discharge Risk After Bariatric Surgery</p>
+            <p class="version">Version 2026-02-02 UPDATED | Categorical Model</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="discharge">At Discharge</button>
+            <button class="tab" data-tab="ed-visit">After ED Visit</button>
+            <button class="tab" data-tab="complication">After Major Complication</button>
+        </div>
+
+        <!-- TAB 1: AT DISCHARGE -->
+        <div class="tab-content active" id="discharge">
+            <div class="disclaimer">
+                <strong>⚠️ Clinical Decision Support Only</strong><br>
+                This calculator provides risk estimates based on MBSAQIP data (2020-2024) for post-discharge PE within 30 days after minimally invasive bariatric surgery. Results should inform, not replace, clinical judgment.
+                <span class="disclaimer-toggle" onclick="toggleDisclaimer()">View full disclaimers →</span>
+                <div class="disclaimer-full" id="full-disclaimer">
+                    <strong>Model Scope/Population:</strong> Primary minimally invasive bariatric procedures (Sleeve, RYGB, DS/SADI) in adults ≥18 years. Not validated for open procedures, revisions, or non-bariatric surgery.<br><br>
+                    <strong>Outcome Definition:</strong> Post-discharge PE diagnosed through day 30 (MBSAQIP definition).<br><br>
+                    <strong>Temporal:</strong> Model trained on 2020-2024 data. Performance may degrade over time.<br><br>
+                    <strong>Modeling/Statistical:</strong> Logistic regression with categorical bins. Individual predictions have uncertainty; population-level calibration expected.<br><br>
+                    <strong>Input Handling:</strong> Age bins (<30, 30-39, 40-49*, 50-59, 60-69, ≥70); BMI bins (<30, 30-39, 40-49*, 50-59, 60-69, ≥70); OR Time (<60, 60-120*, 120-180, >180 min); LOS (0, 1*, 2, 3, 4, 5, 6, 7, ≥8 days). *Reference categories.<br><br>
+                    <strong>Clinical Action:</strong> Risk estimates should be integrated with patient preferences, contraindications, and bleeding risk. Not prescriptive.<br><br>
+                    <strong>Bleeding Risk Not Modeled:</strong> Extended thromboprophylaxis carries bleeding risk not captured here. Individualized assessment required.<br><br>
+                    <strong>Comparative/Baseline:</strong> Population baseline PE rate ~0.4%. Individual risk varies widely.<br><br>
+                    <strong>Regulatory/Legal:</strong> For research and decision support only. Not FDA-cleared. Clinicians retain full responsibility.<br><br>
+                    <strong>Data Source:</strong> MBSAQIP 2020-2024 participating centers. Responsibility: Clinician using this tool.
+                </div>
+            </div>
+
+            <form id="risk-form">
+                <div class="form-group">
+                    <label for="age">Age (years)</label>
+                    <input type="number" id="age" name="age" min="18" max="100" value="55" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="bmi">BMI (kg/m²)</label>
+                    <input type="number" id="bmi" name="bmi" min="15" max="100" step="0.1" value="42" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sex">Sex</label>
+                    <select id="sex" name="sex">
+                        <option value="M">Male</option>
+                        <option value="F" selected>Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="asa">ASA Class</label>
+                    <select id="asa" name="asa">
+                        <option value="1">ASA I (Healthy)</option>
+                        <option value="2">ASA II (Mild systemic disease)</option>
+                        <option value="3" selected>ASA III (Severe systemic disease)</option>
+                        <option value="4">ASA IV (Life-threatening)</option>
+                        <option value="5">ASA V (Moribund)</option>
+                        <option value="6">ASA Unknown</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="procedure">Procedure Type</label>
+                    <select id="procedure" name="procedure">
+                        <option value="sleeve">Sleeve Gastrectomy</option>
+                        <option value="rygb" selected>Roux-en-Y Gastric Bypass (RYGB)</option>
+                        <option value="ds_sadi">Duodenal Switch / SADI</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="or_time">Operative Time (minutes)</label>
+                    <select id="or_time" name="or_time">
+                        <option value="1">&lt; 60 minutes</option>
+                        <option value="2" selected>60-120 minutes</option>
+                        <option value="3">120-180 minutes</option>
+                        <option value="4">&gt; 180 minutes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="los">Length of Stay (days)</label>
+                    <select id="los" name="los">
+                        <option value="0">0 days (same-day discharge)</option>
+                        <option value="1">1 day</option>
+                        <option value="2" selected>2 days</option>
+                        <option value="3">3 days</option>
+                        <option value="4">4 days</option>
+                        <option value="5">5 days</option>
+                        <option value="6">6 days</option>
+                        <option value="7">7 days</option>
+                        <option value="8">7+ days</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="history_dvt" name="history_dvt">
+                    <label for="history_dvt">History of DVT</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="history_pe" name="history_pe">
+                    <label for="history_pe">History of PE</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="immunosuppression" name="immunosuppression">
+                    <label for="immunosuppression">Immunosuppression</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="conversion" name="conversion">
+                    <label for="conversion">Conversion from prior bariatric surgery</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="transfusion" name="transfusion">
+                    <label for="transfusion">Transfusion (intra/post-op)</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="unplanned_icu" name="unplanned_icu">
+                    <label for="unplanned_icu">Unplanned ICU admission</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="pneumonia" name="pneumonia">
+                    <label for="pneumonia">Pneumonia</label>
+                </div>
+
+                <button type="submit" class="button">Calculate Risk</button>
+            </form>
+
+            <div id="results" class="results" style="display: none;">
+                <h3>Risk Assessment</h3>
+                <div class="risk-display" id="risk-percentage">-</div>
+                <div class="risk-category" id="risk-category">-</div>
+                <div class="natural-frequency" id="natural-frequency">-</div>
+                
+                <div class="debug-output">
+                    <h4>Debug Information</h4>
+                    <div id="debug-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: AFTER ED VISIT -->
+        <div class="tab-content" id="ed-visit">
+            <div class="banner">
+                ⚠️ PATIENT HAS TRANSITIONED TO HIGHER-RISK STATE
+            </div>
+
+            <div class="disclaimer">
+                <strong>⚠️ Clinical Decision Support Only</strong><br>
+                This guidance is based on Table 4: Event-Triggered Thromboprophylaxis Strategy. Results should inform, not replace, clinical judgment.
+                <span class="disclaimer-toggle" onclick="toggleDisclaimerED()">View full disclaimers →</span>
+                <div class="disclaimer-full" id="full-disclaimer-ed">
+                    <strong>Model Scope/Population:</strong> Post-discharge patients after minimally invasive bariatric surgery presenting to ED or requiring IV hydration within 30 days.<br><br>
+                    <strong>Clinical Action:</strong> Reassess PE risk immediately. Consider extended thromboprophylaxis based on high-risk modifiers.<br><br>
+                    <strong>Bleeding Risk:</strong> Extended prophylaxis carries bleeding risk—individualized assessment required.<br><br>
+                    <strong>Regulatory:</strong> For decision support only. Clinicians retain full responsibility.
+                </div>
+            </div>
+
+            <h3>Step 1: Event Recognition</h3>
+            <p><strong>Patient has experienced:</strong></p>
+            <ul style="margin: 15px 0 15px 25px; line-height: 1.8;">
+                <li>Post-discharge ED visit within 30 days, OR</li>
+                <li>Outpatient IV hydration within 30 days</li>
+            </ul>
+            <p><strong>Interpretation:</strong> Patient has transitioned into a higher-risk postoperative state, independent of discharge-level risk.</p>
+            <p><strong>Action:</strong> Reassess PE risk immediately.</p>
+
+            <h3 style="margin-top: 30px;">Step 2: High-Risk Modifier Assessment</h3>
+            <form id="ed-form">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_history_dvt_pe">
+                    <label for="ed_history_dvt_pe">History of DVT or PE</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_bmi_50">
+                    <label for="ed_bmi_50">BMI ≥ 50 kg/m²</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_procedure">
+                    <label for="ed_procedure">DS/SADI or Bypass procedure</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_immunosupp">
+                    <label for="ed_immunosupp">Immunosuppression</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_age_50">
+                    <label for="ed_age_50">Age ≥ 50 years</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_conversion">
+                    <label for="ed_conversion">Conversion from prior bariatric surgery</label>
+                </div>
+
+                <button type="submit" class="button">Assess Risk Modifiers</button>
+            </form>
+
+            <div id="ed-recommendation" style="display: none; margin-top: 30px;"></div>
+        </div>
+
+        <!-- TAB 3: AFTER MAJOR COMPLICATION -->
+        <div class="tab-content" id="complication">
+            <div class="banner">
+                🚨 SEVERE POSTOPERATIVE ADVERSE EVENT
+            </div>
+
+            <div class="disclaimer">
+                <strong>⚠️ Clinical Decision Support Only</strong><br>
+                This guidance is based on Table 4: Event-Triggered Thromboprophylaxis Strategy (Step 3). Results should inform, not replace, clinical judgment.
+                <span class="disclaimer-toggle" onclick="toggleDisclaimerComp()">View full disclaimers →</span>
+                <div class="disclaimer-full" id="full-disclaimer-comp">
+                    <strong>Model Scope/Population:</strong> Post-discharge patients experiencing severe complications (readmission, reoperation, sepsis, organ-space infection).<br><br>
+                    <strong>Clinical Action:</strong> Extended thromboprophylaxis strongly recommended at discharge due to sustained physiologic stress.<br><br>
+                    <strong>Bleeding Risk:</strong> Extended prophylaxis carries bleeding risk—individualized assessment required.<br><br>
+                    <strong>Regulatory:</strong> For decision support only. Clinicians retain full responsibility.
+                </div>
+            </div>
+
+            <h3>Step 3: Severe Event Recognition</h3>
+            <p><strong>Patient has experienced ANY of the following:</strong></p>
+            <form id="comp-form">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="comp_readmission">
+                    <label for="comp_readmission">Readmission within 30 days</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="comp_reoperation">
+                    <label for="comp_reoperation">Reoperation within 30 days</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="comp_sepsis">
+                    <label for="comp_sepsis">Sepsis or septic shock</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="comp_infection">
+                    <label for="comp_infection">Organ-space infection</label>
+                </div>
+
+                <button type="submit" class="button">Assess Complication Status</button>
+            </form>
+
+            <div id="comp-recommendation" style="display: none; margin-top: 30px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener("DOMContentLoaded", function() {
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
+                
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        // Disclaimer toggles
+        function toggleDisclaimer() {
+            document.getElementById('full-disclaimer').classList.toggle('show');
+        }
+        function toggleDisclaimerED() {
+            document.getElementById('full-disclaimer-ed').classList.toggle('show');
+        }
+        function toggleDisclaimerComp() {
+            document.getElementById('full-disclaimer-comp').classList.toggle('show');
+        }
+
+        // Coefficients from ui_model_coefs_cat.csv
+        const coefficients = {
+            _cons: -7.023635139438031,
+            '0.los_cat': -0.3248370395032942,
+            '1.age_cat': -0.1536061543529374,
+            '1.bmi_cat': -0.2995935130837714,
+            '1.conversion_case': 0.0326963033824555,
+            '1.icu_inhosp': 0.0849296575974647,
+            '1.or_cat': -0.2389892733440747,
+            '1.pna_inhosp': -0.358241697139583,
+            '1.transf_inhosp': 1.031977230159057,
+            '2.HISTORY_DVT_cat': 0.4379638801135387,
+            '2.HISTORY_PE_cat': 0.9063253431615776,
+            '2.age_cat': -0.1795579982586292,
+            '2.asa2': -0.097089307614911,
+            '2.bmi_cat': -0.3310545582351812,
+            '2.final_anatomy_cat': 0.2018851135932614,
+            '2.los_cat': 0.1916242609752719,
+            '2.sex2': 0.1049713695098418,
+            '3.asa2': -0.0663765741793418,
+            '3.final_anatomy_cat': 0.2634733235633371,
+            '3.los_cat': 0.6400270274273733,
+            '3.or_cat': 0.2623188358281172,
+            '4.age_cat': 0.1129080050769045,
+            '4.asa2': -0.1046912140952194,
+            '4.bmi_cat': 0.0772545280993991,
+            '4.los_cat': 0.950941042956204,
+            '4.or_cat': 0.4246263139144407,
+            '5.age_cat': 0.2531317140411453,
+            '5.bmi_cat': 0.3790652617088885,
+            '5.los_cat': 0.7545386906232477,
+            '6.age_cat': 0.7305490408090647,
+            '6.asa2': 1.012839965977912,
+            '6.bmi_cat': -0.0406306418733762,
+            '6.los_cat': 0.8159378209312501,
+            '7.los_cat': 1.583364457083634,
+            '8.los_cat': 0.4261242813813431,
+            'immu_b': 0.4302349930253844
+        };
+
+        // CORRECTED BMI categorization (now 6 categories, not 7)
+        function categorizeBMI(bmi) {
+            if (bmi < 30) return 1;
+            if (bmi < 40) return 2;     // 30-39.999
+            if (bmi < 50) return 3;     // 40-49.999 (reference)
+            if (bmi < 60) return 4;     // 50-59.999
+            if (bmi < 70) return 5;     // 60-69.999
+            return 6;                   // >=70
+        }
+
+        function categorizeAge(age) {
+            if (age < 30) return 1;
+            if (age < 40) return 2;
+            if (age < 50) return 3;     // Reference
+            if (age < 60) return 4;
+            if (age < 70) return 5;
+            return 6;
+        }
+
+        function stableLogistic(lp) {
+            if (lp >= 0) {
+                const expNegLP = Math.exp(-lp);
+                return 1 / (1 + expNegLP);
+            } else {
+                const expLP = Math.exp(lp);
+                return expLP / (1 + expLP);
+            }
+        }
+
+        // Main calculation
+        document.getElementById('risk-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const age = parseInt(document.getElementById('age').value);
+            const bmi = parseFloat(document.getElementById('bmi').value);
+            const sex = document.getElementById('sex').value;
+            const asa = parseInt(document.getElementById('asa').value);
+            const procedure = document.getElementById('procedure').value;
+            const orTime = parseInt(document.getElementById('or_time').value);
+            const los = parseInt(document.getElementById('los').value);
+            
+            const history_dvt = document.getElementById('history_dvt').checked;
+            const history_pe = document.getElementById('history_pe').checked;
+            const immunosuppression = document.getElementById('immunosuppression').checked;
+            const conversion = document.getElementById('conversion').checked;
+            const transfusion = document.getElementById('transfusion').checked;
+            const unplanned_icu = document.getElementById('unplanned_icu').checked;
+            const pneumonia = document.getElementById('pneumonia').checked;
+
+            // Start with intercept
+            let lp = coefficients._cons;
+            let terms = [`Intercept: ${coefficients._cons.toFixed(6)}`];
+
+            // Age
+            const ageCat = categorizeAge(age);
+            const ageKey = `${ageCat}.age_cat`;
+            if (coefficients[ageKey]) {
+                lp += coefficients[ageKey];
+                terms.push(`Age cat ${ageCat}: +${coefficients[ageKey].toFixed(6)}`);
+            } else {
+                terms.push(`Age cat ${ageCat}: Reference (0)`);
+            }
+
+            // BMI (CORRECTED)
+            const bmiCat = categorizeBMI(bmi);
+            const bmiKey = `${bmiCat}.bmi_cat`;
+            if (coefficients[bmiKey]) {
+                lp += coefficients[bmiKey];
+                terms.push(`BMI cat ${bmiCat}: +${coefficients[bmiKey].toFixed(6)}`);
+            } else {
+                terms.push(`BMI cat ${bmiCat}: Reference (0)`);
+            }
+
+            // Sex (Female = 2, Male = 1 reference)
+            if (sex === 'F') {
+                lp += coefficients['2.sex2'];
+                terms.push(`Sex (Female): +${coefficients['2.sex2'].toFixed(6)}`);
+            } else {
+                terms.push(`Sex (Male): Reference (0)`);
+            }
+
+            // ASA
+            const asaKey = `${asa}.asa2`;
+            if (coefficients[asaKey]) {
+                lp += coefficients[asaKey];
+                terms.push(`ASA ${asa}: +${coefficients[asaKey].toFixed(6)}`);
+            } else {
+                terms.push(`ASA ${asa}: Reference (0)`);
+            }
+
+            // Procedure
+            let procedureCat = 1;  // Sleeve = reference
+            if (procedure === 'rygb') procedureCat = 2;
+            if (procedure === 'ds_sadi') procedureCat = 3;
+            const procKey = `${procedureCat}.final_anatomy_cat`;
+            if (coefficients[procKey]) {
+                lp += coefficients[procKey];
+                terms.push(`Procedure cat ${procedureCat}: +${coefficients[procKey].toFixed(6)}`);
+            } else {
+                terms.push(`Procedure cat ${procedureCat}: Reference (0)`);
+            }
+
+            // OR Time (from dropdown: 1,2,3,4)
+            const orKey = `${orTime}.or_cat`;
+            if (coefficients[orKey]) {
+                lp += coefficients[orKey];
+                terms.push(`OR Time cat ${orTime}: +${coefficients[orKey].toFixed(6)}`);
+            } else {
+                terms.push(`OR Time cat ${orTime}: Reference (0)`);
+            }
+
+            // LOS (from dropdown: 0,1,2,3,4,5,6,7,8)
+            const losKey = `${los}.los_cat`;
+            if (coefficients[losKey]) {
+                lp += coefficients[losKey];
+                terms.push(`LOS cat ${los}: +${coefficients[losKey].toFixed(6)}`);
+            } else {
+                terms.push(`LOS cat ${los}: Reference (0)`);
+            }
+
+            // Binary variables
+            if (history_dvt) {
+                lp += coefficients['2.HISTORY_DVT_cat'];
+                terms.push(`History DVT: +${coefficients['2.HISTORY_DVT_cat'].toFixed(6)}`);
+            }
+            if (history_pe) {
+                lp += coefficients['2.HISTORY_PE_cat'];
+                terms.push(`History PE: +${coefficients['2.HISTORY_PE_cat'].toFixed(6)}`);
+            }
+            if (immunosuppression) {
+                lp += coefficients.immu_b;
+                terms.push(`Immunosuppression: +${coefficients.immu_b.toFixed(6)}`);
+            }
+            if (conversion) {
+                lp += coefficients['1.conversion_case'];
+                terms.push(`Conversion: +${coefficients['1.conversion_case'].toFixed(6)}`);
+            }
+            if (transfusion) {
+                lp += coefficients['1.transf_inhosp'];
+                terms.push(`Transfusion: +${coefficients['1.transf_inhosp'].toFixed(6)}`);
+            }
+            if (unplanned_icu) {
+                lp += coefficients['1.icu_inhosp'];
+                terms.push(`Unplanned ICU: +${coefficients['1.icu_inhosp'].toFixed(6)}`);
+            }
+            if (pneumonia) {
+                lp += coefficients['1.pna_inhosp'];
+                terms.push(`Pneumonia: +${coefficients['1.pna_inhosp'].toFixed(6)}`);
+            }
+
+            // Calculate probability
+            const prob = stableLogistic(lp);
+            const percentage = (prob * 100).toFixed(3);
+
+            // NEW RISK CATEGORIES
+            let category = 'Low Risk';
+            let categoryClass = 'risk-low';
+            if (prob >= 0.006) {                    // ≥0.60%
+                category = 'Very High Risk';
+                categoryClass = 'risk-very-high';
+            } else if (prob >= 0.003) {             // 0.30%-<0.60%
+                category = 'High Risk';
+                categoryClass = 'risk-high';
+            } else if (prob >= 0.001) {             // 0.10%-<0.30%
+                category = 'Elevated Risk';
+                categoryClass = 'risk-elevated';
+            }
+            // else: Low Risk (<0.10%)
+
+            // Natural frequency
+            const oneInN = Math.round(1 / prob);
+            const per1000 = Math.round(prob * 1000);
+
+            // Display results
+            document.getElementById('risk-percentage').textContent = `${percentage}%`;
+            document.getElementById('risk-category').textContent = category;
+            document.getElementById('risk-category').className = `risk-category ${categoryClass}`;
+            document.getElementById('natural-frequency').textContent = 
+                `Approximately 1 in ${oneInN.toLocaleString()} patients (${per1000} per 1,000)`;
+
+            // Debug output
+            document.getElementById('debug-content').innerHTML = `
+                <strong>Linear Predictor:</strong> ${lp.toFixed(6)}<br>
+                <strong>Probability:</strong> ${prob.toFixed(6)}<br><br>
+                <strong>Categorization:</strong><br>
+                Age ${age} → Category ${ageCat}<br>
+                BMI ${bmi} → Category ${bmiCat}<br>
+                OR Time → Category ${orTime}<br>
+                LOS → Category ${los}<br><br>
+                <strong>Term Contributions:</strong><br>
+                ${terms.join('<br>')}
+            `;
+
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        // ED Visit Assessment
+        document.getElementById('ed-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const hasAnyModifier = 
+                document.getElementById('ed_history_dvt_pe').checked ||
+                document.getElementById('ed_bmi_50').checked ||
+                document.getElementById('ed_procedure').checked ||
+                document.getElementById('ed_immunosupp').checked ||
+                document.getElementById('ed_age_50').checked ||
+                document.getElementById('ed_conversion').checked;
+
+            const recDiv = document.getElementById('ed-recommendation');
+            
+            if (hasAnyModifier) {
+                recDiv.className = 'recommendation recommendation-strong';
+                recDiv.innerHTML = `
+                    <h3>⚠️ Step 2a: High-Risk Modifiers Present</h3>
+                    <p><strong>Interpretation:</strong> Significantly increased post-discharge PE risk due to presence of high-risk modifiers.</p>
+                    <p><strong>Recommendation:</strong> <strong>Strongly recommend extended thromboprophylaxis</strong></p>
+                    <ul style="margin: 10px 0 0 25px; line-height: 1.8;">
+                        <li>Consider therapeutic anticoagulation if no contraindications</li>
+                        <li>Duration: minimum 2-4 weeks, individualized based on clinical course</li>
+                        <li>Assess bleeding risk</li>
+                        <li>Close outpatient follow-up</li>
+                    </ul>
+                `;
+            } else {
+                recDiv.className = 'recommendation';
+                recDiv.innerHTML = `
+                    <h3>Step 2b: No Additional High-Risk Modifiers</h3>
+                    <p><strong>Interpretation:</strong> Absolute PE risk remains elevated (~1%) after ED visit or IV hydration requirement.</p>
+                    <p><strong>Recommendation:</strong> <strong>Consider extended thromboprophylaxis</strong></p>
+                    <ul style="margin: 10px 0 0 25px; line-height: 1.8;">
+                        <li>Shared decision-making with patient regarding benefits vs. bleeding risk</li>
+                        <li>If prescribed: typical duration 2 weeks</li>
+                        <li>Assess bleeding risk carefully</li>
+                        <li>Outpatient follow-up</li>
+                    </ul>
+                `;
+            }
+            
+            recDiv.style.display = 'block';
+            recDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        // Complication Assessment
+        document.getElementById('comp-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const hasComplication = 
+                document.getElementById('comp_readmission').checked ||
+                document.getElementById('comp_reoperation').checked ||
+                document.getElementById('comp_sepsis').checked ||
+                document.getElementById('comp_infection').checked;
+
+            const recDiv = document.getElementById('comp-recommendation');
+            
+            if (hasComplication) {
+                recDiv.className = 'recommendation recommendation-strong';
+                recDiv.innerHTML = `
+                    <h3>🚨 Severe Adverse Event Confirmed</h3>
+                    <p><strong>Interpretation:</strong> Sustained physiologic stress with prolonged thrombotic risk. These patients experience a fundamental change in their postoperative trajectory.</p>
+                    <p><strong>Recommendation:</strong> <strong>Extended thromboprophylaxis at discharge</strong></p>
+                    <ul style="margin: 10px 0 0 25px; line-height: 1.8;">
+                        <li><strong>Initiate or continue therapeutic anticoagulation</strong></li>
+                        <li>Duration: minimum 4-6 weeks, potentially longer based on severity</li>
+                        <li>Careful bleeding risk assessment (especially post-operative/septic patients)</li>
+                        <li>Close monitoring and follow-up</li>
+                        <li>Consider hematology consultation for complex cases</li>
+                    </ul>
+                    <div style="margin-top: 15px; padding: 10px; background: #fff; border-left: 3px solid #f44336;">
+                        <strong>Clinical Judgment Required:</strong> Balance thrombosis risk vs. bleeding risk, especially in patients with recent surgery, sepsis, or organ-space infection.
+                    </div>
+                `;
+            } else {
+                recDiv.className = 'recommendation';
+                recDiv.innerHTML = `
+                    <h3>No Severe Adverse Event Identified</h3>
+                    <p>If patient has not experienced any of the listed severe complications, use the <strong>"At Discharge"</strong> or <strong>"After ED Visit"</strong> tabs for appropriate risk assessment.</p>
+                `;
+            }
+            
+            recDiv.style.display = 'block';
+            recDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+            }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
