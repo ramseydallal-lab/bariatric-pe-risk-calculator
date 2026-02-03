@@ -12,7 +12,14 @@
             padding: 0;
             box-sizing: border-box;
         }
-
+            .brand-banner {
+              width: 100%;
+              display: block;
+            }
+            
+            .header-content {
+              padding: 20px 30px 30px 30px;
+}
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -29,12 +36,12 @@
             overflow: hidden;
         }
 
-        .header {
+            .header {
             background: linear-gradient(135deg, #0066cc 0%, #004999 100%);
             color: white;
-            padding: 30px;
             text-align: center;
         }
+
 
         .logo {
             font-size: 24px;
@@ -401,19 +408,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <div style="text-align: center; margin-bottom: 10px;">
-                <img
-                  src="./jefferson-banner.png"
-                      alt="Jefferson Health"
-                      style="max-width: 900px; width: 90%; height: auto; display: block; margin: 0 auto;"
-                >
-
-            </div>
-            <h1>PE Risk Calculator</h1>
-            <p>30-Day Post-Discharge Pulmonary Embolism Risk After Bariatric Surgery</p>
-            <p class="version">Version 2026-02-03 | Categorical Model | MBSAQIP 2020-2024</p>
-            <p class="model-hash">Model: MBSAQIP-2020-2024-PE-CAT2 | SHA256: 7a3f8b2c</p>
-        </div>
+          <img class="brand-banner"
+                 src="./jefferson-banner.png"
+                 alt="Jefferson Health">
+            <div class="header-content">
+  <h1>PE Risk Calculator</h1>
+  <p>30-Day Post-Discharge Pulmonary Embolism Risk After Bariatric Surgery</p>
+  <p class="version">Version 2026-02-03 | Categorical Model | MBSAQIP 2020-2024</p>
+  <p class="model-hash">Model: MBSAQIP-2020-2024-PE-CAT2 | SHA256: 7a3f8b2c</p>
+</div>
 
         <div class="error-banner" id="error-banner"></div>
 
@@ -643,6 +646,10 @@
                 </div>
 
                 <button type="submit">Calculate Risk</button>
+                <button type="button" onclick="resetForm()" style="margin-top: 10px; background: #6c757d;">
+                  Reset
+                </button>
+               
             </form>
 
             <div class="results" id="results">
@@ -1359,6 +1366,14 @@
               button.textContent = panel.classList.contains('show')
                 ? 'Hide Debug Output'
                 : 'Show Debug Output';
+}
+function resetForm() {
+  document.getElementById('risk-form').reset();
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('debug-panel').classList.remove('show');
+  document.getElementById('error-banner').classList.remove('show');
+
+  document.getElementById('risk-form').scrollIntoView({ behavior: 'smooth' });
 }
 
     </script>
