@@ -402,7 +402,7 @@
     <div class="container">
         <div class="header">
             <div style="text-align: center; margin-bottom: 10px;">
-                <img src="https://www.genspark.ai/api/files/s/VkwhmUxW" alt="Jefferson Health" style="max-width: 900px; width: 90%; height: auto; display: block; margin: 0 auto;">
+                <img src="./jefferson-banner.png" alt="Jefferson Health" style="max-width: 900px; width: 90%; height: auto; display: block; margin: 0 auto;">
             </div>
             <h1>PE Risk Calculator</h1>
             <p>30-Day Post-Discharge Pulmonary Embolism Risk After Bariatric Surgery</p>
@@ -424,7 +424,7 @@
                 <h3>⚠️ Clinical Decision Support Tool</h3>
                 <p><strong>This calculator provides risk estimates for CLINICAL DECISION SUPPORT only.</strong> It is NOT a substitute for clinical judgment and does NOT prescribe treatment. All clinical decisions must incorporate individual patient factors, contraindications, bleeding risk, and clinical context.</p>
                 <p><strong>Data Source:</strong> MBSAQIP participating centers, 2020-2024. <strong>Outcome:</strong> Post-discharge pulmonary embolism (PE) within 30 days of bariatric surgery. <strong>Model:</strong> Logistic regression with categorical bins (not FDA-cleared).</p>
-                <button class="disclaimer-toggle" onclick="toggleDisclaimers('discharge')">Show full disclaimers ▼</button>
+                <button type="button" class="disclaimer-toggle" onclick="toggleDisclaimers(event,'discharge')">Show full disclaimers ▼</button>
                 
                 <div class="full-disclaimers" id="discharge-disclaimers">
                     <h4>Model Scope & Population</h4>
@@ -512,7 +512,7 @@
                     <label>Age (years)</label>
                     <select id="age" required>
                         <option value="1">&lt;40</option>
-                        <option value="2" selected>40-49 <span class="reference-marker">(reference)</span></option>
+                        <option value="2" selected>40-49 (reference)</option>
                         <option value="3">50-59</option>
                         <option value="4">60-69</option>
                         <option value="5">≥70</option>
@@ -523,7 +523,7 @@
                     <label>BMI (kg/m²)</label>
                     <select id="bmi" required>
                         <option value="1">&lt;35</option>
-                        <option value="2" selected>35-44.9 <span class="reference-marker">(reference)</span></option>
+                        <option value="2" selected>35-44.9 (reference)</option>
                         <option value="3">45-54.9</option>
                         <option value="4">55-64.9</option>
                         <option value="5">≥65</option>
@@ -533,25 +533,28 @@
                 <div class="form-group">
                     <label>Sex</label>
                     <select id="sex" required>
-                        <option value="1">Male <span class="reference-marker">(reference)</span></option>
+                        <option value="1">Male (reference)</option>
                         <option value="2" selected>Female</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>ASA Class</label>
-                    <select id="asa" required>
-                        <option value="1" selected>ASA I-II <span class="reference-marker">(reference)</span></option>
-                        <option value="2">ASA III</option>
-                        <option value="3">ASA IV-V</option>
-                    <p class="input-note" style="color: #666; font-size: 0.9em; margin-top: 5px;">If ASA unknown, select ASA I-II (most common baseline)</p>
+                   <select id="asa" required>
+                      <option value="1" selected>ASA I-II (reference)</option>
+                      <option value="2">ASA III</option>
+                      <option value="3">ASA IV-V</option>
+                    </select>
+                    <p class="input-note" style="color:#666;font-size:0.9em;margin-top:5px;">
+  If ASA unknown, select ASA I-II (most common baseline)
+</p>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label>Procedure Type</label>
                     <select id="procedure" required>
-                        <option value="1" selected>Sleeve Gastrectomy <span class="reference-marker">(reference)</span></option>
+                        <option value="1" selected>Sleeve Gastrectomy (reference)</option>
                         <option value="2">Gastric Bypass</option>
                         <option value="3">Duodenal Switch-SADI</option>
                     </select>
@@ -561,7 +564,7 @@
                     <label>OR Time (minutes)</label>
                     <select id="or_time" required>
                         <option value="1">&lt;60</option>
-                        <option value="2" selected>60-90 <span class="reference-marker">(reference)</span></option>
+                        <option value="2" selected>60-90 (reference)</option>
                         <option value="3">90-120</option>
                         <option value="4">120-150</option>
                         <option value="5">≥150</option>
@@ -571,7 +574,7 @@
                 <div class="form-group">
                     <label>Length of Stay (days)</label>
                     <select id="los" required>
-                        <option value="0" selected>0-1 <span class="reference-marker">(reference)</span></option>
+                        <option value="0" selected>0-1 (reference)</option>
                         <option value="1">2</option>
                         <option value="2">3-4</option>
                         <option value="3">≥5</option>
@@ -581,7 +584,7 @@
                 <div class="form-group">
                     <label>History of DVT</label>
                     <select id="dvt" required>
-                        <option value="1" selected>No <span class="reference-marker">(reference)</span></option>
+                        <option value="1" selected>No (reference)</option>
                         <option value="2">Yes</option>
                     </select>
                 </div>
@@ -589,7 +592,7 @@
                 <div class="form-group">
                     <label>History of PE</label>
                     <select id="pe_history" required>
-                        <option value="1" selected>No <span class="reference-marker">(reference)</span></option>
+                        <option value="1" selected>No (reference)</option>
                         <option value="2">Yes</option>
                     </select>
                 </div>
@@ -597,7 +600,7 @@
                 <div class="form-group">
                     <label>Conversion from prior bariatric surgery</label>
                     <select id="conversion" required>
-                        <option value="0" selected>No <span class="reference-marker">(reference)</span></option>
+                        <option value="0" selected>No (reference)</option>
                         <option value="1">Yes</option>
                     </select>
                 </div>
@@ -605,7 +608,7 @@
                 <div class="form-group">
                     <label>Inpatient ICU admission</label>
                     <select id="icu" required>
-                        <option value="0" selected>No <span class="reference-marker">(reference)</span></option>
+                        <option value="0" selected>No (reference)</option>
                         <option value="1">Yes</option>
                     </select>
                 </div>
@@ -613,7 +616,7 @@
                 <div class="form-group">
                     <label>Inpatient pneumonia</label>
                     <select id="pna" required>
-                        <option value="0" selected>No <span class="reference-marker">(reference)</span></option>
+                        <option value="0" selected>No (reference)</option>
                         <option value="1">Yes</option>
                     </select>
                 </div>
@@ -621,7 +624,7 @@
                 <div class="form-group">
                     <label>Inpatient blood transfusion</label>
                     <select id="transfusion" required>
-                        <option value="0" selected>No <span class="reference-marker">(reference)</span></option>
+                        <option value="0" selected>No (reference)</option>
                         <option value="1">Yes</option>
                     </select>
                 </div>
@@ -629,7 +632,7 @@
                 <div class="form-group">
                     <label>Immunosuppression</label>
                     <select id="immunosupp" required>
-                        <option value="0" selected>No <span class="reference-marker">(reference)</span></option>
+                        <option value="0" selected>No (reference)</option>
                         <option value="1">Yes</option>
                     </select>
                 </div>
@@ -674,7 +677,7 @@
                     <p style="margin-top: 10px;"><strong>Clinical action:</strong> These estimates are decision-support tools, not prescriptive. Prophylaxis decisions must integrate individual bleeding risk, contraindications, institutional protocols, and clinical judgment.</p>
                 </div>
 
-                <button onclick="toggleDebug()" style="margin-top: 20px; background: #6c757d;">Show Debug Output</button>
+                <button type="button" onclick="toggleDebug(event)" style="margin-top: 20px; background: #6c757d;">Show Debug Output</button>
                 <div class="debug-panel" id="debug-panel"></div>
             </div>
         </div>
@@ -684,7 +687,7 @@
             <div class="disclaimer">
                 <h3>⚠️ Event-Triggered Thromboprophylaxis Assessment</h3>
                 <p><strong>Post-discharge ED visits or IV hydration indicate transition to higher-risk state.</strong> This 3-step protocol guides reassessment and prophylaxis decisions following Table 4: Event-Triggered Thromboprophylaxis Strategy.</p>
-                <button class="disclaimer-toggle" onclick="toggleDisclaimers('ed')">Show full disclaimers ▼</button>
+                <button type="button" class="disclaimer-toggle" onclick="toggleDisclaimers(event,'ed')">Show full disclaimers ▼</button>
                 
                 <div class="full-disclaimers" id="ed-disclaimers">
                     <h4>When to Use This Tab</h4>
@@ -819,7 +822,7 @@
             <div class="disclaimer">
                 <h3>⚠️ Clinical Decision Support Tool</h3>
                 <p><strong>Major complications drastically elevate PE risk.</strong> Use this assessment for patients with serious post-operative complications (anastomotic leak, bleeding, infection, organ injury). This tool does NOT replace clinical judgment.</p>
-                <button class="disclaimer-toggle" onclick="toggleDisclaimers('comp')">Show full disclaimers ▼</button>
+                <button type="button" class="disclaimer-toggle" onclick="toggleDisclaimers(event,'comp')">Show full disclaimers ▼</button>
                 
                 <div class="full-disclaimers" id="comp-disclaimers">
                     <h4>When to Use This Tab</h4>
@@ -1330,31 +1333,29 @@
         });
     });
 
-    function toggleDisclaimers(tab) {
-        const disclaimers = document.getElementById(tab + '-disclaimers');
-        const button = event.target;
-        
-        disclaimers.classList.toggle('show');
-        
-        if (disclaimers.classList.contains('show')) {
-            button.textContent = 'Hide full disclaimers ▲';
-        } else {
-            button.textContent = 'Show full disclaimers ▼';
-        }
-    }
+        function toggleDisclaimers(e, tab) {
+              const disclaimers = document.getElementById(tab + '-disclaimers');
+              const button = e.target;
 
-    function toggleDebug() {
-        const panel = document.getElementById('debug-panel');
-        const button = event.target;
-        
-        panel.classList.toggle('show');
-        
-        if (panel.classList.contains('show')) {
-            button.textContent = 'Hide Debug Output';
-        } else {
-            button.textContent = 'Show Debug Output';
-        }
-    }
+                disclaimers.classList.toggle('show');
+
+              button.textContent = disclaimers.classList.contains('show')
+                ? 'Hide full disclaimers ▲'
+                : 'Show full disclaimers ▼';
+}
+
+
+        function toggleDebug(e) {
+              const panel = document.getElementById('debug-panel');
+              const button = e.target;
+
+              panel.classList.toggle('show');
+
+              button.textContent = panel.classList.contains('show')
+                ? 'Hide Debug Output'
+                : 'Show Debug Output';
+}
+
     </script>
 </body>
 </html>
