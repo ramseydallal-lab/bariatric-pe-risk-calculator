@@ -1,0 +1,21 @@
+{
+  "name": "Bariatric PE Risk Calculator - Jefferson Health",
+  "short_name": "Bariatric PE",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1c366b",
+  "description": "Public informational bariatric PE risk calculator for discharge assessment and event-triggered reassessment guidance.",
+    "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

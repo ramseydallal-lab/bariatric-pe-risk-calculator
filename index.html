@@ -3,1377 +3,1539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PE Risk Calculator - 30-Day Post-Discharge Pulmonary Embolism Risk After Bariatric Surgery">
-    <title>PE Risk Calculator - Jefferson Health</title>
-    
+    <meta name="description" content="Public informational bariatric PE risk calculator using MBSAQIP 2020-2024 data for discharge risk assessment and event-triggered reassessment guidance.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; upgrade-insecure-requests">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Permissions-Policy" content="accelerometer=(), autoplay=(), camera=(), display-capture=(), fullscreen=(self), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()">
+    <meta http-equiv="Cache-Control" content="no-store, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <title>Bariatric PE Risk Calculator - Jefferson Health</title>
+    <meta name="theme-color" content="#1c366b">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="icon-192.svg">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        input[type="checkbox"] {
+            margin-right: 8px;
         }
-            .brand-banner {
-              width: 100%;
-              display: block;
-            }
-            
-            .header-content {
-              padding: 20px 30px 30px 30px;
+
+        /* Stale indicator for coefficients freshness */
+        .stale-indicator {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            vertical-align: middle;
         }
+        .stale-indicator.unknown { background: #e0e0e0; color: #333; }
+        .stale-indicator.fresh { background: #d4edda; color: #155724; }
+        .stale-indicator.stale { background: #fff3cd; color: #856404; }
+        .stale-indicator.expired { background: #f8d7da; color: #721c24; }
+
+        /* Repo-provided logo (optional) */
+        #repo-logo { max-height: 60px; display: none; margin-right: 12px; vertical-align: middle; }
+        .header { display: flex; align-items: center; gap: 12px; padding: 20px; }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        :root {
+            --jh-deep-blue: #1c366b;
+            --jh-bright-blue: #59b7df;
+            --jh-slate: #4e5259;
+            --jh-steel: #8e9089;
+            --jh-silver: #dfe1df;
+            --jh-fuchsia: #af1f8e;
+            --jh-teal: #4dc4cf;
+            --jh-golden: #fcaf17;
+            --jh-chartreuse: #bfd730;
+            --brand-start: var(--jh-bright-blue);
+            --brand-end: var(--jh-deep-blue);
+            --jh-display: "Miller Display", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+            --jh-sans: "Museo Sans", "Avenir Next", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --jh-text: #183156;
+            --jh-text-soft: #5b6572;
+            --jh-line: rgba(28, 54, 107, 0.12);
+            --jh-shadow: 0 30px 82px rgba(12, 28, 64, 0.22);
+            --jh-shadow-soft: 0 12px 28px rgba(20, 47, 92, 0.08);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: var(--jh-sans);
+            font-weight: 300;
+            color: var(--jh-text);
+            background:
+                linear-gradient(135deg, rgba(28, 54, 107, 0.92) 0%, rgba(35, 74, 140, 0.72) 34%, rgba(89, 183, 223, 0.52) 72%, rgba(191, 215, 48, 0.24) 100%),
+                url('./assets/brand/jefferson-background-zoom-2026.jpg') center/cover fixed no-repeat;
             min-height: 100vh;
-            padding: 20px;
+            padding: 30px 18px 44px;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(255,255,255,0.16), transparent 18%),
+                radial-gradient(circle at 80% 14%, rgba(126,233,255,0.18), transparent 16%),
+                radial-gradient(circle at 86% 72%, rgba(95,203,99,0.16), transparent 18%);
+            mix-blend-mode: screen;
+            opacity: 0.8;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(180deg, rgba(8, 20, 54, 0.22), rgba(8, 20, 54, 0.06) 28%, rgba(8, 20, 54, 0.24) 100%);
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1120px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,249,255,0.92));
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.24);
+            border-radius: 30px;
+            box-shadow: var(--jh-shadow);
             overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
 
-         .header {
-              background: linear-gradient(135deg, #0066cc 0%, #004999 100%);
-              color: white;
-              text-align: center;
-        }
-
-
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-
-        .version {
-            font-size: 12px;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-
-        .model-hash {
-            font-family: 'Courier New', monospace;
-            font-size: 10px;
-            opacity: 0.8;
-            margin-top: 3px;
-        }
-
-        .tabs {
-            display: flex;
-            background: #f5f5f5;
-            border-bottom: 2px solid #ddd;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            background: #f5f5f5;
-            border: none;
-            font-size: 14px;
-            font-weight: 500;
-            color: #555;
-            transition: all 0.3s;
-        }
-
-        .tab:hover {
-            background: #e8e8e8;
-            color: #333;
-        }
-
-        .tab.active {
-            background: white;
-            border-bottom: 3px solid #0066cc;
-            color: #0066cc;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 30px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .disclaimer {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 4px;
-        }
-
-        .disclaimer h3 {
-            color: #856404;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .disclaimer p {
-            color: #856404;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
-
-        .disclaimer-toggle {
-            background: none;
-            border: none;
-            color: #0066cc;
-            cursor: pointer;
-            text-decoration: underline;
-            font-size: 13px;
-            padding: 0;
-            margin-top: 5px;
-        }
-
-        .full-disclaimers {
-            display: none;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #f0ad4e;
-        }
-
-        .full-disclaimers.show {
-            display: block;
-        }
-
-        .full-disclaimers h4 {
-            color: #856404;
-            font-size: 14px;
-            margin-top: 12px;
-            margin-bottom: 6px;
-        }
-
-        .full-disclaimers ul {
-            margin-left: 20px;
-            color: #856404;
-            font-size: 13px;
-        }
-
-        .full-disclaimers li {
-            margin-bottom: 4px;
-            line-height: 1.5;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        .reference-marker {
-            color: #0066cc;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        select, input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: #0066cc;
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-
-        button {
-            background: linear-gradient(135deg, #0066cc 0%, #004999 100%);
+        .button {
+            background: linear-gradient(135deg, var(--brand-start) 0%, var(--brand-end) 100%);
             color: white;
-            padding: 15px 30px;
+            padding: 12px 30px;
             border: none;
             border-radius: 6px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
+            margin-top: 20px;
             transition: transform 0.2s;
         }
 
-        button:hover {
+        .button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,102,204,0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
         }
 
         .results {
             margin-top: 30px;
-            padding: 25px;
-            background: #f8f9fa;
+            padding: 20px;
+            background: #f9f9f9;
             border-radius: 8px;
-            display: none;
+            border-left: 4px solid var(--brand-start);
         }
 
-        .results.show {
-            display: block;
-        }
-
-        .risk-value {
+        .risk-display {
             font-size: 48px;
             font-weight: bold;
-            color: #0066cc;
+            color: var(--brand-start);
             text-align: center;
             margin: 20px 0;
-            user-select: none;
-            position: relative;
-        }
-
-        .risk-value::after {
-            content: 'Decision support estimate';
-            font-size: 11px;
-            color: #999;
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            white-space: nowrap;
         }
 
         .risk-category {
             text-align: center;
-            padding: 15px;
-            border-radius: 6px;
+            font-size: 20px;
             font-weight: 600;
-            font-size: 18px;
-            margin: 20px 0;
-        }
-
-        .risk-low { background: #d4edda; color: #155724; }
-        .risk-moderate { background: #fff3cd; color: #856404; }
-        .risk-high { background: #f8d7da; color: #721c24; }
-        .risk-very-high { background: #d6002a; color: white; }
-
-        .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #0066cc;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
-        .info-box h4 {
-            color: #004999;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-
-        .info-box p, .info-box ul {
-            color: #004999;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .info-box ul {
-            margin-left: 20px;
-            margin-top: 10px;
-        }
-
-        .info-box li {
-            margin-bottom: 8px;
-        }
-
-        .reassessment-box {
-            background: #fff9e6;
-            border: 2px solid #ffc107;
-            padding: 20px;
-            margin: 20px 0;
+            margin-bottom: 20px;
+            padding: 10px;
             border-radius: 6px;
         }
 
-        .reassessment-box h4 {
+        .risk-low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .risk-elevated {
+            background: #fff3cd;
             color: #856404;
-            margin-bottom: 12px;
-            font-size: 16px;
         }
 
-        .reassessment-box ul {
-            margin-left: 20px;
-            color: #856404;
+        .risk-high {
+            background: #f8d7da;
+            color: #721c24;
         }
 
-        .reassessment-box li {
-            margin-bottom: 8px;
-            line-height: 1.5;
+        .risk-very-high {
+            background: #f5c6cb;
+            color: #721c24;
+            font-weight: bold;
         }
 
-        .debug-panel {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f1f1f1;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            display: none;
-        }
-
-        .debug-panel.show {
-            display: block;
-        }
-
-        .frequency {
+        .natural-frequency {
             text-align: center;
+            font-size: 18px;
             color: #666;
-            font-size: 16px;
             margin: 15px 0;
         }
 
-        .footer {
-            background: #f8f9fa;
-            border-top: 2px solid #ddd;
-            padding: 20px;
-            text-align: center;
-            color: #666;
-            font-size: 13px;
-        }
-
-        .footer strong {
-            color: #d6002a;
-        }
-
-        .error-banner {
-            background: #d6002a;
-            color: white;
+        .debug-output {
+            margin-top: 20px;
             padding: 15px;
-            margin: 20px 0;
+            background: #f0f0f0;
             border-radius: 6px;
-            font-weight: 600;
-            display: none;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
         }
 
-        .error-banner.show {
+        .debug-output h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .recommendation {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+            margin-top: 20px;
+        }
+
+        .recommendation h3 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+
+        .recommendation-strong {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+
+        .recommendation-strong h3 {
+            color: #c62828;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .disclaimer-toggle {
+            cursor: pointer;
+            color: #0066cc;
+            text-decoration: underline;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .disclaimer-full {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .disclaimer-full.show {
             display: block;
         }
 
-        @media (max-width: 768px) {
+        .banner {
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+
+        .header {
+            position: relative;
+            color: white;
+            padding: 38px 38px 30px;
+            background:
+                linear-gradient(90deg, rgba(28, 54, 107, 0.96) 0%, rgba(35, 74, 140, 0.72) 38%, rgba(89, 183, 223, 0.42) 72%, rgba(191, 215, 48, 0.22) 100%),
+                url('./assets/brand/jefferson-background-zoom-2026.jpg') center/cover no-repeat;
+            overflow: hidden;
+            display: block;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 18% 28%, rgba(255,255,255,0.08), transparent 12%),
+                radial-gradient(circle at 30% 34%, rgba(89,183,223,0.14), transparent 20%),
+                radial-gradient(circle at 86% 16%, rgba(89,183,223,0.18), transparent 10%),
+                radial-gradient(circle at 92% 68%, rgba(191,215,48,0.14), transparent 14%);
+            pointer-events: none;
+        }
+        .header-inner {
+            position: relative;
+            z-index: 1;
+            max-width: 760px;
+        }
+        .brand-banner {
+            width: min(420px, 100%);
+            height: auto;
+            display: block;
+            margin-bottom: 22px;
+            filter: drop-shadow(0 12px 18px rgba(2, 11, 32, 0.22));
+        }
+        .brand-shield {
+            position: absolute;
+            right: 28px;
+            top: 24px;
+            width: min(260px, 26vw);
+            height: auto;
+            opacity: 0.12;
+            filter: saturate(0) brightness(1.9);
+            mix-blend-mode: screen;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .header-graphics {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: min(34%, 360px);
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .header-graphics::before {
+            content: "";
+            position: absolute;
+            inset: 10% 10% 16% 22%;
+            background: radial-gradient(circle at 18px 18px, rgba(255,255,255,0.2) 0 4px, transparent 4.5px) 0 0 / 18px 18px;
+            opacity: 0.3;
+            mask-image: linear-gradient(180deg, transparent 0%, black 18%, black 82%, transparent 100%);
+        }
+        .header-bracket {
+            position: absolute;
+            left: 18%;
+            bottom: 18%;
+            width: 72px;
+            height: 72px;
+            border-left: 10px solid rgba(89, 183, 223, 0.72);
+            border-top: 10px solid rgba(89, 183, 223, 0.72);
+            border-radius: 4px 0 0 0;
+            opacity: 0.85;
+        }
+        .header-spritz {
+            position: absolute;
+            inset: auto 6% 12% auto;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 24px solid rgba(89, 183, 223, 0.1);
+            box-shadow:
+                -120px -120px 0 18px rgba(89, 183, 223, 0.08),
+                56px -96px 0 0 rgba(191, 215, 48, 0.12),
+                86px 20px 0 28px rgba(89, 183, 223, 0.07);
+            opacity: 0.9;
+        }
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.16);
+            backdrop-filter: blur(12px);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+        h1 {
+            font-family: var(--jh-display);
+            font-size: clamp(2rem, 3.8vw, 3.2rem);
+            line-height: 1.02;
+            margin-bottom: 14px;
+            max-width: 13ch;
+            letter-spacing: -0.025em;
+            font-weight: 400;
+        }
+        .header-subtitle {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.92);
+            max-width: 62ch;
+            margin-bottom: 16px;
+        }
+        .version {
+            font-size: 11px;
+            color: rgba(255,255,255,0.78);
+            margin-top: 6px;
+            letter-spacing: 0.03em;
+        }
+        .header-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+        }
+        .meta-chip {
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.11);
+            border: 1px solid rgba(255,255,255,0.18);
+            backdrop-filter: blur(12px);
+            min-width: 120px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .meta-chip-label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.68);
+            margin-bottom: 3px;
+            font-weight: 700;
+        }
+        .meta-chip-value {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .admin-row {
+            padding: 12px 20px;
+            text-align: right;
+        }
+        #admin-toggle {
+            display: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 14px 22px 0;
+            background: linear-gradient(180deg, rgba(7, 37, 92, 0.06), rgba(255,255,255,0));
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scroll-behavior: smooth;
+        }
+        .tab {
+            flex: 1 1 0;
+            min-width: 190px;
+            padding: 13px 16px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(255,255,255,0.8);
+            border: 1px solid rgba(28, 54, 107, 0.08);
+            border-radius: 16px 16px 0 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--jh-text-soft);
+            transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+            text-decoration: none;
+        }
+        .tab:hover { transform: translateY(-1px); background: rgba(255,255,255,0.94); color: var(--jh-navy); border-color: rgba(89, 183, 223, 0.22); }
+        .tab.active {
+            background: #fff;
+            border-color: rgba(89, 183, 223, 0.28);
+            box-shadow: 0 -10px 18px rgba(12, 48, 121, 0.06);
+            color: var(--jh-navy);
+        }
+        .tab-content { display: none; padding: 30px 30px 36px; position: relative; }
+        .tab-content.active { display: block; }
+        .tab-content.active::before {
+            content: '';
+            position: absolute;
+            inset: 0 18px 0 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.36), rgba(255,255,255,0));
+            border-top: 1px solid rgba(255,255,255,0.65);
+            pointer-events: none;
+            border-radius: 24px 24px 0 0;
+        }
+        .tab-content > * { position: relative; z-index: 1; }
+
+        .results {
+            margin-top: 25px;
+            padding: 26px;
+            background: linear-gradient(180deg, rgba(248,250,253,0.97), rgba(255,255,255,0.99));
+            border: 1px solid rgba(28, 54, 107, 0.08);
+            border-radius: 26px;
+            border-left: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), var(--jh-shadow-soft);
+        }
+
+        .risk-display {
+            font-size: 54px;
+            font-weight: 800;
+            color: var(--jh-deep-blue);
+            text-align: center;
+            margin: 20px 0;
+            letter-spacing: -0.04em;
+        }
+
+        .risk-category {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding: 14px;
+            border-radius: 16px;
+        }
+
+        .natural-frequency {
+            text-align: center;
+            font-size: 18px;
+            color: var(--jh-text-soft);
+            margin: 15px 0;
+        }
+
+        .debug-output,
+        .recommendation,
+        .disclaimer {
+            border-radius: 18px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+        .debug-output {
+            background: #f1f4f8;
+            border: 1px solid rgba(28, 54, 107, 0.08);
+        }
+        .recommendation {
+            border-left: none;
+            border: 1px solid rgba(89, 183, 223, 0.2);
+        }
+        .disclaimer {
+            background: linear-gradient(135deg, rgba(254, 248, 228, 0.98), rgba(255, 253, 244, 0.94));
+            padding: 17px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(226, 185, 77, 0.38);
+            border-left: 6px solid #dbab2f;
+            margin: 20px 0 24px;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+        .disclaimer-toggle {
+            color: var(--jh-royal);
+        }
+        .banner {
+            background: linear-gradient(135deg, #d98911, #b56d0b);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border-radius: 16px;
+            box-shadow: var(--jh-shadow-soft);
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 7px;
+            color: var(--jh-text);
+            font-size: 14px;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid rgba(28, 54, 107, 0.14);
+            border-radius: 15px;
+            font-size: 14px;
+            color: var(--jh-text);
+            background: rgba(255,255,255,0.94);
+            transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+        }
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: rgba(89, 183, 223, 0.72);
+            box-shadow: 0 0 0 4px rgba(89, 183, 223, 0.16);
+            background: white;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(28,54,107,0.08);
+            border-radius: 14px;
+            background: rgba(255,255,255,0.75);
+        }
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+        .button {
+            border-radius: 16px;
+            font-weight: 700;
+            box-shadow: 0 18px 28px rgba(35, 74, 140, 0.2);
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 34px rgba(35, 74, 140, 0.28);
+            filter: saturate(1.05);
+        }
+
+        @media (max-width: 600px) {
             .container {
-                margin: 10px;
+                border-radius: 24px;
+            }
+            
+            .header {
+                padding: 26px 20px 22px;
             }
             
             h1 {
-                font-size: 22px;
+                font-size: 30px;
             }
             
             .tab {
                 font-size: 12px;
-                padding: 12px 8px;
+                padding: 12px 14px;
             }
             
             .tab-content {
-                padding: 20px;
+                padding: 18px;
             }
-
-            .risk-value {
-                font-size: 36px;
-            }
+            .tab-content.active::before { inset: 0 10px 0 10px; border-radius: 20px 20px 0 0; }
+            .brand-shield, .header-graphics { display: none; }
+            .brand-banner { width: min(320px, 92%); }
+            body { padding: 16px 10px 28px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-  <img class="brand-banner" src="./jefferson-banner.png" alt="Jefferson Health">
-  <div class="header-content">
-    <h1>PE Risk Calculator</h1>
-    <p>30-Day Post-Discharge Pulmonary Embolism Risk After Bariatric Surgery</p>
-    <p class="version">Version 2026-02-03 | Categorical Model | MBSAQIP 2020-2024</p>
-    <p class="model-hash">Model: MBSAQIP-2020-2024-PE-CAT2 | SHA256: 7a3f8b2c</p>
-  </div>
-</div>  
-        <div class="error-banner" id="error-banner"></div>
+            <img class="brand-shield" src="./assets/brand/jefferson-shield.png" alt="">
+            <div class="header-graphics">
+                <div class="header-bracket"></div>
+                <div class="header-spritz"></div>
+            </div>
+            <div class="header-inner">
+                <img id="repo-logo" class="brand-banner" src="./assets/brand/jefferson-banner.png" alt="Jefferson Health">
+                <svg id="default-logo" class="logo" role="img" aria-label="Jefferson Health logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" style="display:none;"></svg>
+                <div class="hero-kicker">Clinical decision support workspace</div>
+                <h1>Bariatric PE risk calculator</h1>
+                <p class="header-subtitle">Public informational decision support for 30-day post-discharge pulmonary embolism risk after minimally invasive bariatric surgery, plus event-triggered reassessment guidance.</p>
+                <p class="version">Model: <span id="model-version">Version (loading...)</span> <span id="stale-indicator" class="stale-indicator unknown" title="Coefficient freshness">Checking...</span> | MBSAQIP 2020-2024</p>
+                <div class="header-meta">
+                    <div class="meta-chip"><span class="meta-chip-label">Primary use</span><span class="meta-chip-value">At discharge</span></div>
+                    <div class="meta-chip"><span class="meta-chip-label">Reassessment</span><span class="meta-chip-value">ED visit or complication</span></div>
+                    <div class="meta-chip"><span class="meta-chip-label">Population</span><span class="meta-chip-value">Minimally invasive bariatric surgery</span></div>
+                    <div class="meta-chip"><span class="meta-chip-label">Support role</span><span class="meta-chip-value">Public informational tool</span></div>
+                </div>
+            </div>
+        </div>
+            <div class="admin-row">
+                <button id="admin-toggle" class="button" onclick="toggleAdminPanel(event)" style="width:auto; padding:8px 14px; background:#444; margin-top:10px;">Admin</button>
+            </div>
 
         <div class="tabs">
-            <button class="tab active" data-tab="discharge">At Discharge</button>
-            <button class="tab" data-tab="ed">After ED Visit</button>
-            <button class="tab" data-tab="complication">After Major Complication</button>
+            <a class="tab active" data-tab="discharge" href="discharge.html">At Discharge</a>
+            <a class="tab" data-tab="ed-visit" href="ed-visit.html">After ED Visit</a>
+            <a class="tab" data-tab="complication" href="complication.html">After Major Complication</a>
         </div>
 
         <!-- TAB 1: AT DISCHARGE -->
         <div class="tab-content active" id="discharge">
             <div class="disclaimer">
-                <h3>⚠️ Clinical Decision Support Tool</h3>
-                <p><strong>This calculator provides risk estimates for CLINICAL DECISION SUPPORT only.</strong> It is NOT a substitute for clinical judgment and does NOT prescribe treatment. All clinical decisions must incorporate individual patient factors, contraindications, bleeding risk, and clinical context.</p>
-                <p><strong>Data Source:</strong> MBSAQIP participating centers, 2020-2024. <strong>Outcome:</strong> Post-discharge pulmonary embolism (PE) within 30 days of bariatric surgery. <strong>Model:</strong> Logistic regression with categorical bins (not FDA-cleared).</p>
-                <button type="button" class="disclaimer-toggle" onclick="toggleDisclaimers(event,'discharge')">Show full disclaimers ▼</button>
-                
-                <div class="full-disclaimers" id="discharge-disclaimers">
-                    <h4>Model Scope & Population</h4>
-                    <ul>
-                        <li>Data derived from MBSAQIP participating centers (2020-2024)</li>
-                        <li>Includes primary and revisional bariatric surgery procedures</li>
-                        <li>Estimates apply at population level; individual patient risk may vary</li>
-                    </ul>
-                    
-                    <h4>Outcome Definition</h4>
-                    <ul>
-                        <li><strong>PE-specific endpoint:</strong> This model predicts isolated pulmonary embolism (PE), NOT composite venous thromboembolism (VTE = DVT + PE)</li>
-                        <li>Absolute risk values are NOT directly comparable to prior VTE-composite thresholds</li>
-                        <li>PE events captured within 30 days post-discharge per MBSAQIP definitions</li>
-                    </ul>
-                    
-                    <h4>Risk Thresholds & Interpretation</h4>
-                    <ul>
-                        <li><strong>Thresholds are data-driven</strong> based on independent validation performance</li>
-                        <li>Selected to balance: (1) Specificity (minimize false positives), (2) Treatment volume feasibility, (3) Risk enrichment in high-risk groups</li>
-                        <li>These are NOT prescriptive cutoffs—clinical action must consider individual bleeding risk and context</li>
-                    </ul>
-                    
-                    <h4>Temporal Considerations</h4>
-                    <ul>
-                        <li>Risk estimates apply to 30-day post-discharge window</li>
-                        <li>At-discharge estimates assume uncomplicated inpatient course</li>
-                        <li><strong>Dynamic reassessment required</strong> when post-discharge events occur (see tabs 2-3)</li>
-                    </ul>
-                    
-                    <h4>Modeling & Statistical Limitations</h4>
-                    <ul>
-                        <li>Logistic regression with categorical bins (reference categories indicated by *)</li>
-                        <li>Model uncertainty exists—point estimates should be interpreted as ranges</li>
-                        <li>Calibration assessed at population level; individual predictions have uncertainty</li>
-                        <li>External validation ongoing—performance may vary in other populations</li>
-                    </ul>
-                    
-                    <h4>Input Handling & Categorization</h4>
-                    <ul>
-                        <li>Continuous variables binned into categories (see form dropdowns)</li>
-                        <li>Missing data or out-of-range values not explicitly handled in this UI—clinician judgment required</li>
-                        <li>Reference categories (marked *) represent baseline comparison groups</li>
-                    </ul>
-                    
-                    <h4>Clinical Action & Treatment</h4>
-                    <ul>
-                        <li>Risk estimates should guide, not mandate, prophylaxis decisions</li>
-                        <li>Must weigh PE risk against bleeding risk and contraindications</li>
-                        <li>No universal threshold exists—institutional protocols and individual patient factors should guide decisions</li>
-                        <li>Consider extended prophylaxis, early follow-up, and patient education in higher-risk categories</li>
-                    </ul>
-                    
-                    <h4>Bleeding Risk Not Modeled</h4>
-                    <ul>
-                        <li>This calculator does NOT estimate bleeding risk from anticoagulation</li>
-                        <li>Clinicians must independently assess bleeding contraindications before prescribing prophylaxis</li>
-                    </ul>
-                    
-                    <h4>Comparative & Baseline Context</h4>
-                    <ul>
-                        <li>Prior literature used ~0.4% threshold for composite VTE (DVT + PE combined)</li>
-                        <li>This calculator estimates PE-only risk—absolute values differ from VTE-composite models</li>
-                        <li>Do not apply VTE-composite thresholds to PE-specific estimates without proper context</li>
-                    </ul>
-                    
-                    <h4>Regulatory & Legal</h4>
-                    <ul>
-                        <li>NOT FDA-cleared or approved as a medical device</li>
-                        <li>Intended for research and clinical decision support only</li>
-                        <li>Clinicians retain full responsibility for treatment decisions</li>
-                    </ul>
-                    
-                    <h4>Data Source & Responsibility</h4>
-                    <ul>
-                        <li>Data from MBSAQIP participating centers (2020-2024)</li>
-                        <li>Estimates reflect this population; generalizability to other settings unknown</li>
-                        <li>All clinical decisions remain the responsibility of the treating clinician</li>
-                    </ul>
+                <strong>⚠️ Clinical Decision Support Only</strong><br>
+                This calculator provides risk estimates based on MBSAQIP data (2020-2024) for post-discharge PE within 30 days after minimally invasive bariatric surgery. Results should inform, not replace, clinical judgment. <strong>Public-use notice:</strong> Do not enter direct patient identifiers such as name, date of birth, medical record number, address, phone number, or free-text notes.
+                <span class="disclaimer-toggle" onclick="toggleDisclaimer()">View full disclaimers →</span>
+                <div class="disclaimer-full" id="full-disclaimer">
+                    <strong>Model Scope/Population:</strong> Primary minimally invasive bariatric procedures (Sleeve, RYGB, DS/SADI) in adults ≥18 years. Not validated for open procedures, revisions, or non-bariatric surgery.<br><br>
+                    <strong>Outcome Definition:</strong> Post-discharge PE diagnosed through day 30 (MBSAQIP definition).<br><br>
+                    <strong>Temporal:</strong> Model trained on 2020-2024 data. Performance may degrade over time.<br><br>
+                    <strong>Modeling/Statistical:</strong> Logistic regression with categorical bins. Individual predictions have uncertainty; population-level calibration expected.<br><br>
+                    <strong>Input Handling:</strong> Age bins (<30, 30-39, 40-49*, 50-59, 60-69, ≥70); BMI bins (<30, 30-39, 40-49*, 50-59, 60-69, ≥70); OR Time (<60, 60-120*, 120-180, >180 min); LOS (0, 1*, 2, 3, 4, 5, 6, 7, ≥8 days). *Reference categories.<br><br>
+                    <strong>Clinical Action:</strong> Risk estimates should be integrated with patient preferences, contraindications, and bleeding risk. Not prescriptive.<br><br>
+                    <strong>Bleeding Risk Not Modeled:</strong> Extended thromboprophylaxis carries bleeding risk not captured here. Individualized assessment required.<br><br>
+                    <strong>Comparative/Baseline:</strong> Population baseline PE rate ~0.4%. Individual risk varies widely.<br><br>
+                    <strong>Regulatory/Legal:</strong> For research and decision support only. Not FDA-cleared. Clinicians retain full responsibility.<br><br>
+                    <strong>Data Source:</strong> MBSAQIP 2020-2024 participating centers. Responsibility: Clinician using this tool.
                 </div>
             </div>
 
             <form id="risk-form">
                 <div class="form-group">
-                    <label>Age (years)</label>
-                    <select id="age" required>
-                        <option value="1">&lt;40</option>
-                        <option value="2" selected>40-49 (reference)</option>
-                        <option value="3">50-59</option>
-                        <option value="4">60-69</option>
-                        <option value="5">≥70</option>
+                    <label for="age">Age (years)</label>
+                    <input type="number" id="age" name="age" min="18" max="100" value="55" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="bmi">BMI (kg/m²)</label>
+                    <input type="number" id="bmi" name="bmi" min="15" max="100" step="0.1" value="42" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sex">Sex</label>
+                    <select id="sex" name="sex">
+                        <option value="M">Male</option>
+                        <option value="F" selected>Female</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>BMI (kg/m²)</label>
-                    <select id="bmi" required>
-                        <option value="1">&lt;35</option>
-                        <option value="2" selected>35-44.9 (reference)</option>
-                        <option value="3">45-54.9</option>
-                        <option value="4">55-64.9</option>
-                        <option value="5">≥65</option>
+                    <label for="asa">ASA Class</label>
+                    <select id="asa" name="asa">
+                        <option value="1">ASA I (Healthy)</option>
+                        <option value="2">ASA II (Mild systemic disease)</option>
+                        <option value="3" selected>ASA III (Severe systemic disease)</option>
+                        <option value="4">ASA IV (Life-threatening)</option>
+                        <option value="5">ASA V (Moribund)</option>
+                        <option value="6">ASA Unknown</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Sex</label>
-                    <select id="sex" required>
-                        <option value="1">Male (reference)</option>
-                        <option value="2" selected>Female</option>
+                    <label for="procedure">Procedure Type</label>
+                    <select id="procedure" name="procedure">
+                        <option value="sleeve">Sleeve Gastrectomy</option>
+                        <option value="rygb" selected>Roux-en-Y Gastric Bypass (RYGB)</option>
+                        <option value="ds_sadi">Duodenal Switch / SADI</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>ASA Class</label>
-                   <select id="asa" required>
-                      <option value="1" selected>ASA I-II (reference)</option>
-                      <option value="2">ASA III</option>
-                      <option value="3">ASA IV-V</option>
-                    </select>
-                    <p class="input-note" style="color:#666;font-size:0.9em;margin-top:5px;">
-  If ASA unknown, select ASA I-II (most common baseline)
-</p>
-                    
-                </div>
-
-                <div class="form-group">
-                    <label>Procedure Type</label>
-                    <select id="procedure" required>
-                        <option value="1" selected>Sleeve Gastrectomy (reference)</option>
-                        <option value="2">Gastric Bypass</option>
-                        <option value="3">Duodenal Switch-SADI</option>
+                    <label for="or_time">Operative Time (minutes)</label>
+                    <select id="or_time" name="or_time">
+                        <option value="1">&lt; 60 minutes</option>
+                        <option value="2" selected>60-120 minutes</option>
+                        <option value="3">120-180 minutes</option>
+                        <option value="4">&gt; 180 minutes</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>OR Time (minutes)</label>
-                    <select id="or_time" required>
-                        <option value="1">&lt;60</option>
-                        <option value="2" selected>60-90 (reference)</option>
-                        <option value="3">90-120</option>
-                        <option value="4">120-150</option>
-                        <option value="5">≥150</option>
+                    <label for="los">Length of Stay (days)</label>
+                    <select id="los" name="los">
+                        <option value="0">0 days (same-day discharge)</option>
+                        <option value="1">1 day</option>
+                        <option value="2" selected>2 days</option>
+                        <option value="3">3 days</option>
+                        <option value="4">4 days</option>
+                        <option value="5">5 days</option>
+                        <option value="6">6 days</option>
+                        <option value="7">7 days</option>
+                        <option value="8">7+ days</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Length of Stay (days)</label>
-                    <select id="los" required>
-                        <option value="0" selected>0-1 (reference)</option>
-                        <option value="1">2</option>
-                        <option value="2">3-4</option>
-                        <option value="3">≥5</option>
-                    </select>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="history_dvt" name="history_dvt">
+                    <label for="history_dvt">History of DVT</label>
                 </div>
 
-                <div class="form-group">
-                    <label>History of DVT</label>
-                    <select id="dvt" required>
-                        <option value="1" selected>No (reference)</option>
-                        <option value="2">Yes</option>
-                    </select>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="history_pe" name="history_pe">
+                    <label for="history_pe">History of PE</label>
                 </div>
 
-                <div class="form-group">
-                    <label>History of PE</label>
-                    <select id="pe_history" required>
-                        <option value="1" selected>No (reference)</option>
-                        <option value="2">Yes</option>
-                    </select>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="immunosuppression" name="immunosuppression">
+                    <label for="immunosuppression">Immunosuppression</label>
                 </div>
 
-                <div class="form-group">
-                    <label>Conversion from prior bariatric surgery</label>
-                    <select id="conversion" required>
-                        <option value="0" selected>No (reference)</option>
-                        <option value="1">Yes</option>
-                    </select>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="conversion" name="conversion">
+                    <label for="conversion">Conversion from prior bariatric surgery</label>
                 </div>
 
-                <div class="form-group">
-                    <label>Inpatient ICU admission</label>
-                    <select id="icu" required>
-                        <option value="0" selected>No (reference)</option>
-                        <option value="1">Yes</option>
-                    </select>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="transfusion" name="transfusion">
+                    <label for="transfusion">Transfusion (intra/post-op)</label>
                 </div>
 
-                <div class="form-group">
-                    <label>Inpatient pneumonia</label>
-                    <select id="pna" required>
-                        <option value="0" selected>No (reference)</option>
-                        <option value="1">Yes</option>
-                    </select>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="unplanned_icu" name="unplanned_icu">
+                    <label for="unplanned_icu">Unplanned ICU admission</label>
                 </div>
 
-                <div class="form-group">
-                    <label>Inpatient blood transfusion</label>
-                    <select id="transfusion" required>
-                        <option value="0" selected>No (reference)</option>
-                        <option value="1">Yes</option>
-                    </select>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="pneumonia" name="pneumonia">
+                    <label for="pneumonia">Pneumonia</label>
                 </div>
 
-                <div class="form-group">
-                    <label>Immunosuppression</label>
-                    <select id="immunosupp" required>
-                        <option value="0" selected>No (reference)</option>
-                        <option value="1">Yes</option>
-                    </select>
-                </div>
-
-                <button type="submit">Calculate Risk</button>
-                <button type="button" onclick="resetForm()" style="margin-top: 10px; background: #6c757d;">
-                  Reset
-                </button>
-               
+                <button type="submit" class="button">Calculate Risk</button>
             </form>
 
-            <div class="results" id="results">
-                <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Risk Assessment Results</h2>
+            <div id="results" class="results" style="display: none;" aria-live="polite">
+                <h3>Risk Assessment</h3>
+                <div class="risk-display" id="risk-percentage">-</div>
+                <div class="risk-category" id="risk-category">-</div>
+                <div class="natural-frequency" id="natural-frequency">-</div>
                 
-                <div class="risk-value" id="risk-value"></div>
-                <div class="frequency" id="frequency"></div>
-                <div class="risk-category" id="risk-category"></div>
-
-                <div class="info-box">
-                    <h4>Risk Category Definitions (PE-Specific)</h4>
-                    <ul>
-                        <li><strong>Low Risk (&lt;0.20%):</strong> PE risk substantially below threshold for routine extended prophylaxis. Standard perioperative care; discharge education about warning signs.</li>
-                        <li><strong>Moderate Risk (0.20-0.39%):</strong> PE risk in intermediate range. Consider patient-specific factors (prior VTE, immobility, obesity severity, bleeding risk). May warrant closer follow-up or selective prophylaxis.</li>
-                        <li><strong>High Risk (0.40-0.79%):</strong> PE risk above actionable threshold. Strong consideration for extended prophylaxis unless contraindications exist. Early follow-up recommended.</li>
-                        <li><strong>Very High Risk (≥0.80%):</strong> Highest PE risk tier with substantial risk enrichment. Extended prophylaxis strongly recommended unless bleeding risk prohibits. Close monitoring and patient education essential.</li>
-                    </ul>
+                <div class="debug-output">
+                    <h4>Debug Information</h4>
+                    <div id="debug-content"></div>
                 </div>
-
-                <div class="reassessment-box">
-                    <h4>⚠️ Dynamic Reassessment Required</h4>
-                    <p style="margin-bottom: 10px;"><strong>Re-evaluate PE risk if any post-discharge event occurs:</strong></p>
-                    <ul>
-                        <li><strong>Emergency department visit</strong> (any reason—dehydration, pain, nausea, fever)</li>
-                        <li><strong>Readmission or prolonged hospitalization</strong></li>
-                        <li><strong>Major complication</strong> (anastomotic leak, bleeding, infection, organ injury)</li>
-                        <li><strong>Clinical deterioration</strong> requiring intervention or ICU admission</li>
-                        <li><strong>New immobility</strong> or prolonged bedrest</li>
-                    </ul>
-                    <p style="margin-top: 10px; font-style: italic;">Use Tabs 2-3 to assess elevated risk in these scenarios. Post-discharge events significantly increase PE risk beyond at-discharge estimates.</p>
-                </div>
-
-                <div class="info-box">
-                    <h4>Interpretation & Context</h4>
-                    <p><strong>This model predicts pulmonary embolism (PE) only—not composite VTE (DVT + PE).</strong></p>
-                    <p style="margin-top: 10px;">Risk thresholds are derived from independent validation data balancing specificity, treatment volume, and risk enrichment.</p>
-                    <p style="margin-top: 10px;"><strong>Clinical action:</strong> These estimates are decision-support tools, not prescriptive. Prophylaxis decisions must integrate individual bleeding risk, contraindications, institutional protocols, and clinical judgment.</p>
-                </div>
-
-                <button type="button" onclick="toggleDebug(event)" style="margin-top: 20px; background: #6c757d;">Show Debug Output</button>
-                <div class="debug-panel" id="debug-panel"></div>
             </div>
         </div>
 
-        <!-- TAB 2: AFTER ED VISIT - REORGANIZED PER TABLE 4 -->
-        <div class="tab-content" id="ed">
+        <!-- TAB 2: AFTER ED VISIT -->
+        <div class="tab-content" id="ed-visit">
+            <div class="banner">
+                ⚠️ PATIENT HAS TRANSITIONED TO HIGHER-RISK STATE
+            </div>
+
             <div class="disclaimer">
-                <h3>⚠️ Event-Triggered Thromboprophylaxis Assessment</h3>
-                <p><strong>Post-discharge ED visits or IV hydration indicate transition to higher-risk state.</strong> This 3-step protocol guides reassessment and prophylaxis decisions following Table 4: Event-Triggered Thromboprophylaxis Strategy.</p>
-                <button type="button" class="disclaimer-toggle" onclick="toggleDisclaimers(event,'ed')">Show full disclaimers ▼</button>
-                
-                <div class="full-disclaimers" id="ed-disclaimers">
-                    <h4>When to Use This Tab</h4>
-                    <ul>
-                        <li>Patient had bariatric surgery and has been discharged home</li>
-                        <li>Patient presents to ED within 30 days post-discharge for ANY reason</li>
-                        <li>Patient receives outpatient IV hydration within 30 days post-discharge</li>
-                        <li>Common scenarios: dehydration, abdominal pain, nausea/vomiting, fever, surgical site concerns</li>
-                    </ul>
-                    
-                    <h4>Clinical Rationale (Table 4 Framework)</h4>
-                    <ul>
-                        <li><strong>Step 1:</strong> ED visit or IV hydration signals clinical deterioration—PE risk elevation independent of discharge-level classification</li>
-                        <li><strong>Step 2a/2b:</strong> High-risk modifiers further stratify absolute PE risk (~1% baseline after ED encounter)</li>
-                        <li><strong>Step 3:</strong> Severe adverse events require extended prophylaxis at discharge</li>
-                    </ul>
-                    
-                    <h4>Evidence Base</h4>
-                    <ul>
-                        <li>Historical data shows PE risk elevation even when ED visit appears unrelated to VTE symptoms</li>
-                        <li>Dehydration, immobility, infection, and physiologic stress amplify thrombotic risk</li>
-                        <li>Event-triggered strategy allows dynamic risk reassessment beyond static discharge models</li>
-                    </ul>
+                <strong>⚠️ Clinical Decision Support Only</strong><br>
+                This guidance is based on Table 4: Event-Triggered Thromboprophylaxis Strategy. Results should inform, not replace, clinical judgment. <strong>Public-use notice:</strong> Do not enter direct patient identifiers or free-text patient information.
+                <span class="disclaimer-toggle" onclick="toggleDisclaimerED()">View full disclaimers →</span>
+                <div class="disclaimer-full" id="full-disclaimer-ed">
+                    <strong>Model Scope/Population:</strong> Post-discharge patients after minimally invasive bariatric surgery presenting to ED or requiring IV hydration within 30 days.<br><br>
+                    <strong>Clinical Action:</strong> Reassess PE risk immediately. Consider extended thromboprophylaxis based on high-risk modifiers.<br><br>
+                    <strong>Bleeding Risk:</strong> Extended prophylaxis carries bleeding risk—individualized assessment required.<br><br>
+                    <strong>Regulatory:</strong> For decision support only. Clinicians retain full responsibility.
                 </div>
             </div>
 
-            <!-- STEP 1: BASELINE RECOGNITION -->
-            <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
-                <h4 style="color: #856404;">📋 STEP 1: Clinical Finding</h4>
-                <p style="color: #856404; margin-bottom: 10px;"><strong>Post-discharge ED visit or outpatient IV hydration within 30 days</strong></p>
-                <p style="color: #856404;"><em>Clinical Interpretation:</em> Patient has transitioned into a <strong>higher-risk postoperative state</strong>, independent of discharge-level risk classification.</p>
-                <p style="color: #856404; margin-top: 10px;"><strong>✓ Recommended Action:</strong> Reassess PE risk immediately using Steps 2 and 3 below.</p>
-            </div>
+            <h3>Step 1: Event Recognition</h3>
+            <p><strong>Patient has experienced:</strong></p>
+            <ul style="margin: 15px 0 15px 25px; line-height: 1.8;">
+                <li>Post-discharge ED visit within 30 days, OR</li>
+                <li>Outpatient IV hydration within 30 days</li>
+            </ul>
+            <p><strong>Interpretation:</strong> Patient has transitioned into a higher-risk postoperative state, independent of discharge-level risk.</p>
+            <p><strong>Action:</strong> Reassess PE risk immediately.</p>
 
-            <!-- STEP 2: HIGH-RISK MODIFIERS -->
+            <h3 style="margin-top: 30px;">Step 2: High-Risk Modifier Assessment</h3>
             <form id="ed-form">
-                <h3 style="margin: 25px 0 15px 0; color: #333;">STEP 2: Check for High-Risk Modifiers</h3>
-                <p style="margin-bottom: 15px; color: #666;">Select all patient-level risk factors that apply:</p>
-
                 <div class="checkbox-group">
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="ed-history-dvt-pe" name="ed-modifier" value="history_dvt_pe">
-                        <label for="ed-history-dvt-pe" style="margin: 0;">History of DVT or PE</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="ed-bmi-50" name="ed-modifier" value="bmi_50">
-                        <label for="ed-bmi-50" style="margin: 0;">BMI ≥50 kg/m²</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="ed-ds-bypass" name="ed-modifier" value="ds_bypass">
-                        <label for="ed-ds-bypass" style="margin: 0;">Duodenal Switch (DS) or Roux-en-Y Gastric Bypass</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="ed-immunosuppression" name="ed-modifier" value="immunosuppression">
-                        <label for="ed-immunosuppression" style="margin: 0;">Immunosuppression (chronic steroids, biologics, transplant)</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="ed-age-50" name="ed-modifier" value="age_50">
-                        <label for="ed-age-50" style="margin: 0;">Age ≥50 years</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="ed-conversion" name="ed-modifier" value="conversion">
-                        <label for="ed-conversion" style="margin: 0;">Conversion operation (open or laparoscopic/robotic conversion)</label>
-                    </div>
+                    <input type="checkbox" id="ed_history_dvt_pe">
+                    <label for="ed_history_dvt_pe">History of DVT or PE</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_bmi_50">
+                    <label for="ed_bmi_50">BMI ≥ 50 kg/m²</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_procedure">
+                    <label for="ed_procedure">DS/SADI or Bypass procedure</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_immunosupp">
+                    <label for="ed_immunosupp">Immunosuppression</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_age_50">
+                    <label for="ed_age_50">Age ≥ 50 years</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="ed_conversion">
+                    <label for="ed_conversion">Conversion from prior bariatric surgery</label>
                 </div>
 
-                <button type="submit" style="margin-top: 25px;">Assess Risk Modifiers (Step 2)</button>
+                <button type="submit" class="button">Assess Risk Modifiers</button>
             </form>
 
-            <div class="results" id="ed-results">
-                <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Event-Triggered Risk Assessment</h2>
-                
-                <!-- STEP 2a: ANY HIGH-RISK MODIFIERS PRESENT -->
-                <div id="ed-step-2a" style="display: none;">
-                    <div class="info-box" style="background: #f8d7da; border-left-color: #d6002a;">
-                        <h4 style="color: #721c24;">⚠️ STEP 2a: High-Risk Modifiers Present</h4>
-                        <p style="color: #721c24;" id="ed-modifier-list"></p>
-                        <p style="color: #721c24; margin-top: 10px;"><em>Clinical Interpretation:</em> Additional modifiers associated with <strong>substantially increased post-discharge PE risk</strong>.</p>
-                    </div>
-
-                    <div class="reassessment-box" style="border-color: #d6002a; background: #f8d7da;">
-                        <h4 style="color: #721c24;">✓ Recommended Action (Step 2a)</h4>
-                        <p style="color: #721c24; margin-bottom: 10px;"><strong>Strongly recommend extended thromboprophylaxis</strong></p>
-                        <ul style="color: #721c24;">
-                            <li><strong>Duration:</strong> Minimum 2-4 weeks; extend based on mobility and recovery</li>
-                            <li><strong>Agent:</strong> Low-molecular-weight heparin (LMWH) or fondaparinux per institutional protocol</li>
-                            <li><strong>Contraindications:</strong> Individualize if active bleeding, severe coagulopathy, or thrombocytopenia</li>
-                            <li><strong>Monitoring:</strong> Close outpatient follow-up; educate on PE warning signs</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- STEP 2b: NO HIGH-RISK MODIFIERS -->
-                <div id="ed-step-2b" style="display: none;">
-                    <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
-                        <h4 style="color: #856404;">STEP 2b: No Additional High-Risk Modifiers</h4>
-                        <p style="color: #856404;"><em>Clinical Interpretation:</em> Absolute PE risk remains <strong>elevated (~1%)</strong> after ED or IV hydration encounter.</p>
-                    </div>
-
-                    <div class="reassessment-box" style="border-color: #ffc107; background: #fff3cd;">
-                        <h4 style="color: #856404;">✓ Recommended Action (Step 2b)</h4>
-                        <p style="color: #856404; margin-bottom: 10px;"><strong>Consider extended thromboprophylaxis</strong></p>
-                        <ul style="color: #856404;">
-                            <li>Shared decision-making with patient regarding benefits vs. bleeding risk</li>
-                            <li>Prophylaxis duration: 1-2 weeks if initiated; reassess at follow-up</li>
-                            <li>Close outpatient monitoring (48-72 hours); educate on PE symptoms</li>
-                            <li>Lower threshold for PE workup (D-dimer, CTA) if clinical suspicion arises</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- STEP 3: SEVERE ADVERSE EVENT CHECK -->
-                <div class="info-box" style="background: #e8f4f8; border-left-color: #0066cc; margin-top: 25px;">
-                    <h4 style="color: #004080;">🔍 STEP 3: Severe Postoperative Adverse Event?</h4>
-                    <p style="color: #004080; margin-bottom: 10px;">Does the patient have any of the following?</p>
-                    <ul style="color: #004080;">
-                        <li>Hospital readmission required</li>
-                        <li>Reoperation for complication management</li>
-                        <li>Sepsis, septic shock, or organ-space infection</li>
-                        <li>ICU-level care or mechanical ventilation</li>
-                        <li>Other severe complication (anastomotic leak, GI bleeding, etc.)</li>
-                    </ul>
-                    <p style="color: #004080; margin-top: 15px;"><strong>If YES → Proceed to Tab 3: "After Major Complication"</strong></p>
-                    <p style="color: #004080; margin-top: 10px;"><em>Clinical Interpretation:</em> Sustained physiologic stress with <strong>prolonged thrombotic risk</strong>.</p>
-                    <p style="color: #004080; margin-top: 5px;"><strong>Recommended Action (Step 3):</strong> Extended thromboprophylaxis recommended at discharge (unless contraindicated).</p>
-                </div>
-            </div>
+            <div id="ed-recommendation" style="display: none; margin-top: 30px;"></div>
         </div>
 
         <!-- TAB 3: AFTER MAJOR COMPLICATION -->
         <div class="tab-content" id="complication">
+            <div class="banner">
+                🚨 SEVERE POSTOPERATIVE ADVERSE EVENT
+            </div>
+
             <div class="disclaimer">
-                <h3>⚠️ Clinical Decision Support Tool</h3>
-                <p><strong>Major complications drastically elevate PE risk.</strong> Use this assessment for patients with serious post-operative complications (anastomotic leak, bleeding, infection, organ injury). This tool does NOT replace clinical judgment.</p>
-                <button type="button" class="disclaimer-toggle" onclick="toggleDisclaimers(event,'comp')">Show full disclaimers ▼</button>
-                
-                <div class="full-disclaimers" id="comp-disclaimers">
-                    <h4>When to Use This Tab</h4>
-                    <ul>
-                        <li>Patient had bariatric surgery and developed a major complication</li>
-                        <li>Examples: anastomotic leak, GI bleeding, intra-abdominal abscess, sepsis, organ injury, wound dehiscence requiring reoperation</li>
-                        <li>May occur during index hospitalization or after discharge</li>
-                    </ul>
-                    
-                    <h4>Why Major Complications Elevate PE Risk</h4>
-                    <ul>
-                        <li>Systemic inflammation and hypercoagulable state</li>
-                        <li>Prolonged immobility during extended hospitalization</li>
-                        <li>Reoperation and additional surgical trauma</li>
-                        <li>ICU-level care with central lines, mechanical ventilation, vasopressors</li>
-                        <li>Historical data shows PE rates dramatically higher in complication cohorts</li>
-                    </ul>
-                    
-                    <h4>High-Risk Indicators</h4>
-                    <ul>
-                        <li>Markers of severe complication burden requiring aggressive prophylaxis</li>
-                        <li>Presence of ≥2 indicators suggests very high PE risk—extended prophylaxis strongly recommended unless contraindicated</li>
-                        <li>Must balance PE risk against bleeding risk (especially with GI bleeding, coagulopathy)</li>
-                    </ul>
+                <strong>⚠️ Clinical Decision Support Only</strong><br>
+                This guidance is based on Table 4: Event-Triggered Thromboprophylaxis Strategy (Step 3). Results should inform, not replace, clinical judgment. <strong>Public-use notice:</strong> Do not enter direct patient identifiers or free-text patient information.
+                <span class="disclaimer-toggle" onclick="toggleDisclaimerComp()">View full disclaimers →</span>
+                <div class="disclaimer-full" id="full-disclaimer-comp">
+                    <strong>Model Scope/Population:</strong> Post-discharge patients experiencing severe complications (readmission, reoperation, sepsis, organ-space infection).<br><br>
+                    <strong>Clinical Action:</strong> Extended thromboprophylaxis strongly recommended at discharge due to sustained physiologic stress.<br><br>
+                    <strong>Bleeding Risk:</strong> Extended prophylaxis carries bleeding risk—individualized assessment required.<br><br>
+                    <strong>Regulatory:</strong> For decision support only. Clinicians retain full responsibility.
                 </div>
             </div>
 
-            <div class="info-box" style="background: #f8d7da; border-left-color: #d6002a;">
-                <h4 style="color: #721c24;">🚨 Major Complication = High PE Risk</h4>
-                <p style="color: #721c24;"><strong>Any major post-operative complication substantially increases PE risk.</strong></p>
-                <p style="color: #721c24; margin-top: 10px;">Major complications include: anastomotic leak, GI bleeding requiring transfusion/intervention, intra-abdominal abscess/sepsis, organ injury, reoperation, prolonged ICU stay, mechanical ventilation, wound dehiscence.</p>
-                <p style="color: #721c24; margin-top: 10px;"><strong>Baseline recommendation:</strong> Extended prophylaxis should be strongly considered for ALL patients with major complications unless contraindications exist.</p>
-            </div>
-
+            <h3>Step 3: Severe Event Recognition</h3>
+            <p><strong>Patient has experienced ANY of the following:</strong></p>
             <form id="comp-form">
-                <h3 style="margin: 25px 0 15px 0; color: #333;">Step 3: Check High-Risk Indicators</h3>
-                <p style="margin-bottom: 20px; color: #666;">Select all that apply:</p>
-
                 <div class="checkbox-group">
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="comp-icu-prolonged" name="comp-indicator">
-                        <label for="comp-icu-prolonged" style="margin: 0;">ICU stay ≥3 days OR mechanical ventilation required</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="comp-reoperation" name="comp-indicator">
-                        <label for="comp-reoperation" style="margin: 0;">Reoperation performed for complication management</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="comp-sepsis-shock" name="comp-indicator">
-                        <label for="comp-sepsis-shock" style="margin: 0;">Sepsis, septic shock, or vasopressor requirement</label>
-                    </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="comp-prolonged-hosp" name="comp-indicator">
-                        <label for="comp-prolonged-hosp" style="margin: 0;">Hospital stay ≥7 days due to complication</label>
-                    </div>
+                    <input type="checkbox" id="comp_readmission">
+                    <label for="comp_readmission">Readmission within 30 days</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="comp_reoperation">
+                    <label for="comp_reoperation">Reoperation within 30 days</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="comp_sepsis">
+                    <label for="comp_sepsis">Sepsis or septic shock</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="comp_infection">
+                    <label for="comp_infection">Organ-space infection</label>
                 </div>
 
-                <button type="submit" style="margin-top: 25px;">Assess Complication Status</button>
+                <button type="submit" class="button">Assess Complication Status</button>
             </form>
 
-            <div class="results" id="comp-results">
-                <h2 style="text-align: center; color: #333; margin-bottom: 20px;">Major Complication Risk Assessment</h2>
-                
-                <div class="risk-category risk-very-high" style="background: #d6002a; color: white;">
-                    ⚠️ VERY HIGH PE RISK - Major Complication
-                </div>
-
-                <div class="info-box" style="background: #f8d7da; border-left-color: #d6002a;">
-                    <h4 style="color: #721c24;">High-Risk Indicators Present:</h4>
-                    <p style="color: #721c24;" id="comp-indicator-count"></p>
-                </div>
-
-                <div class="info-box">
-                    <h4>Clinical Recommendations</h4>
-                    <ul id="comp-recommendations"></ul>
-                </div>
-
-                <div class="reassessment-box" style="border-color: #d6002a; background: #f8d7da;">
-                    <h4 style="color: #721c24;">⚕️ Extended Prophylaxis Guidance</h4>
-                    <p style="color: #721c24; margin-bottom: 10px;"><strong>Extended prophylaxis strongly recommended unless contraindicated by:</strong></p>
-                    <ul style="color: #721c24;">
-                        <li>Active bleeding or high bleeding risk (especially GI bleeding)</li>
-                        <li>Severe coagulopathy or thrombocytopenia</li>
-                        <li>Other absolute contraindications to anticoagulation</li>
-                    </ul>
-                    <p style="color: #721c24; margin-top: 15px;"><strong>Duration:</strong> No universal guideline exists. Consider:</p>
-                    <ul style="color: #721c24;">
-                        <li>Minimum 2-4 weeks post-discharge; extend based on mobility, ongoing complications, and recovery trajectory</li>
-                        <li>Continue until patient mobile and complications resolved</li>
-                        <li>Institutional protocols and individual clinical context should guide duration</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p><strong>NOT FDA-CLEARED.</strong> Research and clinical decision support only.</p>
-            <p style="margin-top: 10px;">This calculator does NOT constitute medical advice. Clinicians retain full responsibility for all treatment decisions.</p>
+            <div id="comp-recommendation" style="display: none; margin-top: 30px;"></div>
         </div>
     </div>
 
+    <script type="module">
+        (async () => {
+            try {
+                const model = await import('./model.js');
+                window.model = window.model || model;
+                console.info('Model module loaded');
+            } catch (err) {
+                console.error('Failed to load model module:', err);
+                // Optional fallback: load a non-module UMD/legacy bundle `model.legacy.js` if available
+                const fallback = document.createElement('script');
+                fallback.src = 'model.legacy.js';
+                fallback.onload = () => console.info('Legacy model loaded');
+                fallback.onerror = () => console.warn('Legacy model failed to load');
+                document.head.appendChild(fallback);
+            }
+        })();
+    </script>
+
     <script>
-    // Embedded coefficients (v2.2.1 - CORRECTED ASA coefficients)
-    const COEFS = {
-        "_cons": -7.359925831161669,
-        "1.age_cat": -0.1707944848970168,
-        "1.bmi_cat": 0.0201716215885371,
-        "1.conversion_case": 0.0091934510151847,
-        "1.icu_inhosp": 0.0477686778352449,
-        "1.los_cat": 0.2043870040504978,
-        "1.or_cat": -0.2609151064615611,
-        "1.pna_inhosp": -0.4070056544061855,
-        "1.transf_inhosp": 1.102089726959736,
-        "2.HISTORY_DVT_cat": 0.4351823913972787,
-        "2.HISTORY_PE_cat": 0.8927562968581318,
-        "2.asa2": 0.0430234155584275,
-        "2.final_anatomy_cat": 0.1817496402942271,
-        "2.los_cat": 0.7269080224114364,
-        "2.sex2": 0.0997606515772661,
-        "3.age_cat": 0.1180797603346544,
-        "3.asa2": -0.039161272986978,
-        "3.bmi_cat": 0.2731806894556259,
-        "3.final_anatomy_cat": 0.2188574422528906,
-        "3.los_cat": 0.8030304480511562,
-        "3.or_cat": 0.0438307784056062,
-        "4.age_cat": 0.261049564886048,
-        "4.bmi_cat": 0.4839104477046168,
-        "4.or_cat": 0.177708561076741,
-        "5.age_cat": 0.74519056789782,
-        "5.bmi_cat": 0.7290282237091352,
-        "5.or_cat": 0.4524747062637586,
-        "immu_b": 0.4364415905257424
-    };
-
-
-
-    // Coefficient validation
-    function validateCoefficient(term, description) {
-        if (COEFS[term] === undefined) {
-            const error = `CRITICAL ERROR: Missing coefficient for ${term} (${description})`;
-            console.error(error);
-            showError(error);
-            throw new Error(error);
+        // Disclaimer toggles - defined globally so inline onclick handlers can access them
+        function toggleDisclaimer() {
+            document.getElementById('full-disclaimer').classList.toggle('show');
         }
-        return COEFS[term];
-    }
+        function toggleDisclaimerED() {
+            document.getElementById('full-disclaimer-ed').classList.toggle('show');
+        }
+        function toggleDisclaimerComp() {
+            document.getElementById('full-disclaimer-comp').classList.toggle('show');
+        }
 
-    function showError(message) {
-        const banner = document.getElementById('error-banner');
-        banner.textContent = '⚠️ ' + message;
-        banner.classList.add('show');
-    }
+        // --- Admin UI Variables and Handlers (Global Scope) ---
+        const adminToggle = document.getElementById('admin-toggle');
+        let adminPanel = null;
+        let coefficients = null;  // Moved to global scope
 
-    // Tab switching
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
+        function createAdminPanel() {
+            if (adminPanel) return adminPanel;
+            adminPanel = document.createElement('div');
+            adminPanel.id = 'admin-panel';
+            adminPanel.style.display = 'none';
+            adminPanel.style.padding = '15px 20px';
+            adminPanel.style.borderTop = '1px solid #eee';
+            adminPanel.innerHTML = `
+                <h3>Admin: Coefficients</h3>
+                <div style="margin-bottom:8px;"><strong>Version:</strong> <span id="admin-version">-</span></div>
+                <div style="margin-bottom:8px;"><strong>Timestamp:</strong> <span id="admin-timestamp">-</span></div>
+                <div style="margin-bottom:8px;"><strong>Checksum:</strong> <span id="admin-checksum">-</span></div>
+                <div style="margin-bottom:12px;"><button id="admin-refresh" class="button" style="width:auto; padding:8px 14px; background:#1976d2;">Refresh from network</button>
+                <label style="margin-left:10px; font-size:13px;"><input id="admin-override" type="checkbox"> Allow override of checksum mismatch</label></div>
+                <div style="margin-bottom:12px;"><input id="admin-file" type="file" accept="application/json"></div>
+                <hr>
+                <h4>Branding</h4>
+                <div style="margin-bottom:8px;"><input id="admin-logo-file" type="file" accept="image/*"></div>
+                <div style="margin-bottom:8px; font-size:13px;">Preview: <img id="admin-logo-preview" src="" style="max-height:40px; vertical-align:middle; display:none; margin-left:8px;"></div>
+                <div style="margin-bottom:8px;"><button id="admin-brand-clear" class="button" style="width:auto; padding:6px 10px; background:#777;">Clear Branding</button></div>
+                <div id="admin-status" style="font-family: monospace; font-size:12px; color:#333"></div>
+            `;
+            let container = document.querySelector('.container');
+            if (!container) {
+                console.warn('Container element not found; appending admin panel to body');
+                container = document.body;
+            }
+            container.appendChild(adminPanel);
+            console.log('Admin panel created and appended, id:', adminPanel.id);
 
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const targetTab = tab.dataset.tab;
+            document.getElementById('admin-refresh').addEventListener('click', async () => {
+                await adminRefresh();
+            });
+            document.getElementById('admin-file').addEventListener('change', async (ev) => {
+                await adminUpload(ev.target.files && ev.target.files[0]);
+            });
+            document.getElementById('admin-logo-file').addEventListener('change', async (ev) => {
+                await adminBrandingUpload(ev.target.files && ev.target.files[0]);
+            });
+            document.getElementById('admin-brand-clear').addEventListener('click', async (ev) => {
+                ev.preventDefault();
+                clearBranding();
+            });
+
+            return adminPanel;
+        }
+
+        function toggleAdminPanel(ev){
+            try {
+                console.log('toggleAdminPanel invoked');
+                const panel = createAdminPanel();
+                if (!panel) {
+                    console.error('createAdminPanel returned falsy:', panel);
+                    return;
+                }
+                console.log('Toggling panel visibility, currently:', panel.style.display);
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                console.log('Panel visibility now:', panel.style.display);
+                updateAdminDisplay();
+                if(ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+            } catch (e) { console.error('toggleAdminPanel error:', e); }
+        }
+        try { window.toggleAdminPanel = toggleAdminPanel; } catch(e) { /* ignore */ }
+
+        function updateAdminDisplay() {
+            const verEl = document.getElementById('admin-version');
+            const tsEl = document.getElementById('admin-timestamp');
+            const ckEl = document.getElementById('admin-checksum');
+            if (coefficients) {
+                verEl.textContent = coefficients.version || 'n/a';
+                tsEl.textContent = coefficients.timestamp || 'n/a';
+                ckEl.textContent = coefficients.checksum || '(none)';
+            } else {
+                verEl.textContent = '-'; tsEl.textContent = '-'; ckEl.textContent = '-';
+            }
+        }
+
+        async function adminRefresh() {
+            const status = document.getElementById('admin-status');
+            status.textContent = 'Fetching...';
+            console.debug('adminRefresh: starting network fetch for coefficients.json');
+            try {
+                const res = await fetch('coefficients.json', {cache: 'no-store'});
+                console.debug('adminRefresh: fetch response', res && res.status);
+                if (!res.ok) throw new Error('Network error: '+res.status);
+                const text = await res.text();
+                console.debug('adminRefresh: fetched text length', text && text.length);
+                const parsed = JSON.parse(text);
+                console.debug('adminRefresh: parsed checksum', parsed.checksum);
+                const provided = parsed.checksum || '';
+                const parsedNoChecksum = Object.assign({}, parsed);
+                delete parsedNoChecksum.checksum;
+                const canonical = JSON.stringify(canonicalize(parsedNoChecksum));
+                const computed = await computeSHA256Hex(canonical);
+                console.debug('adminRefresh: computed checksum', computed, 'provided', provided);
+                const override = document.getElementById('admin-override').checked;
+                if (provided && computed && computed !== provided && !override) {
+                    status.textContent = 'Checksum mismatch — fetch rejected (use override to accept)';
+                    return;
+                }
+                await applyCoefficients(parsed, true);
+                status.textContent = 'Loaded and applied coefficients from network.';
+            } catch (err) {
+                console.error('adminRefresh error', err);
+                status.textContent = 'Refresh failed: '+err.message;
+            }
+            updateAdminDisplay();
+        }
+
+        async function adminUpload(file) {
+            const status = document.getElementById('admin-status');
+            if (!file) return;
+            console.debug('adminUpload: file selected', file && file.name, file && file.size);
+            status.textContent = 'Reading file...';
+            try {
+                const txt = await file.text();
+                console.debug('adminUpload: file text length', txt && txt.length);
+                const parsed = JSON.parse(txt);
+                console.debug('adminUpload: parsed checksum', parsed.checksum);
+                const provided = parsed.checksum || '';
+                const parsedNoChecksum = Object.assign({}, parsed);
+                delete parsedNoChecksum.checksum;
+                const canonical = JSON.stringify(canonicalize(parsedNoChecksum));
+                const computed = await computeSHA256Hex(canonical);
+                console.debug('adminUpload: computed checksum', computed, 'provided', provided);
+                const override = document.getElementById('admin-override').checked;
+                if (provided && computed && computed !== provided && !override) {
+                    status.textContent = 'Checksum mismatch — upload rejected (enable override to force)';
+                    return;
+                }
+                await applyCoefficients(parsed, true);
+                status.textContent = 'Uploaded and applied coefficients.';
+            } catch (err) {
+                console.error('adminUpload error', err);
+                status.textContent = 'Upload failed: '+err.message;
+            }
+            updateAdminDisplay();
+        }
+
+        function rgbToHex(r,g,b){
+            return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+        }
+        function hexToRgb(hex){
+            const h = hex.replace('#','');
+            return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+        }
+        function relativeLuminance([r,g,b]){
+            const srgb = [r,g,b].map(v=>v/255).map(c=> c<=0.03928? c/12.92 : Math.pow((c+0.055)/1.055,2.4));
+            return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2];
+        }
+        function contrastRatio(hexA, hexB){
+            const L1 = relativeLuminance(hexToRgb(hexA));
+            const L2 = relativeLuminance(hexToRgb(hexB));
+            const lighter = Math.max(L1,L2);
+            const darker = Math.min(L1,L2);
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+        function kmeans(pixels, k=4, maxIter=8){
+            if(pixels.length===0) return [];
+            const centers = [];
+            for(let i=0;i<k;i++){ centers.push(pixels[(i*pixels.length/k)|0].slice()); }
+            let assignments = new Array(pixels.length).fill(0);
+            for(let iter=0; iter<maxIter; iter++){
+                let moved = false;
+                for(let i=0;i<pixels.length;i++){
+                    let best=0, bestDist=Infinity;
+                    for(let c=0;c<centers.length;c++){
+                        const d = (pixels[i][0]-centers[c][0])**2 + (pixels[i][1]-centers[c][1])**2 + (pixels[i][2]-centers[c][2])**2;
+                        if(d<bestDist){ bestDist=d; best=c; }
+                    }
+                    if(assignments[i]!==best){ assignments[i]=best; moved=true; }
+                }
+                if(!moved) break;
+                const sums = Array.from({length:k}, ()=>[0,0,0,0]);
+                for(let i=0;i<pixels.length;i++){
+                    const a = assignments[i];
+                    sums[a][0]+=pixels[i][0]; sums[a][1]+=pixels[i][1]; sums[a][2]+=pixels[i][2]; sums[a][3]++;
+                }
+                for(let c=0;c<k;c++){
+                    if(sums[c][3]>0){ centers[c][0]=Math.round(sums[c][0]/sums[c][3]); centers[c][1]=Math.round(sums[c][1]/sums[c][3]); centers[c][2]=Math.round(sums[c][2]/sums[c][3]); }
+                }
+            }
+            const counts = Array.from({length:k}, ()=>0);
+            for(let a of assignments) counts[a]++;
+            const clusters = centers.map((center,i)=>({center, count: counts[i]})).sort((a,b)=>b.count-a.count);
+            return clusters;
+        }
+
+        async function adminBrandingUpload(file){
+            const status = document.getElementById('admin-status');
+            const preview = document.getElementById('admin-logo-preview');
+            if (!file) return;
+            console.debug('adminBrandingUpload: file selected', file && file.name, file && file.size);
+            status.textContent = 'Reading image and extracting palette...';
+            try {
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const fr = new FileReader();
+                    fr.onload = () => resolve(fr.result);
+                    fr.onerror = reject;
+                    fr.readAsDataURL(file);
+                });
+                console.debug('adminBrandingUpload: dataUrl length', dataUrl && dataUrl.length);
+                const img = new Image(); img.crossOrigin='Anonymous'; img.src = dataUrl;
+                await new Promise((res,rej)=>{ img.onload = res; img.onerror = rej; });
+                const maxDim = 96;
+                const w = Math.min(maxDim, img.width || maxDim);
+                const h = Math.min(maxDim, img.height || maxDim);
+                const cvs = document.createElement('canvas'); cvs.width = w; cvs.height = h;
+                const ctx = cvs.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+                const data = ctx.getImageData(0,0,w,h).data;
+                const pixels = [];
+                for(let i=0;i<data.length;i+=4){
+                    const a = data[i+3]; if(a<128) continue;
+                    pixels.push([data[i], data[i+1], data[i+2]]);
+                }
+                console.debug('adminBrandingUpload: visible pixels', pixels.length);
+                if(pixels.length===0) throw new Error('No visible pixels');
+                const clusters = kmeans(pixels, Math.min(5, Math.max(2, Math.floor(pixels.length/5000)||3)));
+                console.debug('adminBrandingUpload: clusters', clusters.map(c=>({center:c.center,count:c.count}))); 
+                const palette = clusters.map(c=> rgbToHex(c.center[0],c.center[1],c.center[2]));
+                const primary = palette[0] || '#0066cc';
+                const secondary = palette[1] || palette[0] || '#004999';
+                const white = '#ffffff', black = '#000000';
+                const contrastWhite = contrastRatio(primary, white);
+                const contrastBlack = contrastRatio(primary, black);
+                const textColor = contrastWhite >= 4.5 ? white : (contrastBlack >= 4.5 ? black : (contrastWhite>contrastBlack?white:black));
+                const branding = { logoDataUrl: dataUrl, palette, primary, secondary, textColor, uploadedAt: new Date().toISOString() };
+                await applyBranding(branding, true);
+                if(preview){ preview.src = dataUrl; preview.style.display = 'inline-block'; }
+                status.textContent = 'Branding applied.';
+            } catch (err) {
+                status.textContent = 'Branding upload failed: '+err.message;
+            }
+        }
+
+        async function applyBranding(branding, persist=false){
+            try {
+                if(!branding) return;
+                const imgEl = document.getElementById('repo-logo');
+                const svg = document.getElementById('default-logo');
+                if(imgEl && branding.logoDataUrl){
+                    imgEl.src = branding.logoDataUrl;
+                    imgEl.style.display = 'inline-block';
+                    if(svg) svg.style.display = 'none';
+                }
+                if(branding.primary) document.documentElement.style.setProperty('--brand-start', branding.primary);
+                if(branding.secondary) document.documentElement.style.setProperty('--brand-end', branding.secondary);
+                if(branding.textColor) document.documentElement.style.setProperty('--brand-text', branding.textColor);
+            } catch(e){ console.debug('applyBranding failed', e); }
+        }
+
+        function clearBranding(){
+            try{
+                const imgEl = document.getElementById('repo-logo');
+                const svg = document.getElementById('default-logo');
+                const preview = document.getElementById('admin-logo-preview');
+                if(imgEl){ imgEl.src='./assets/brand/jefferson-banner.png'; imgEl.style.display='inline-block'; }
+                if(preview){ preview.src=''; preview.style.display='none'; }
+                if(svg) svg.style.display = 'none';
+                document.documentElement.style.setProperty('--brand-start', '#59b7df');
+                document.documentElement.style.setProperty('--brand-end', '#1c366b');
+                document.documentElement.style.setProperty('--brand-text', '#ffffff');
+            }catch(e){ console.debug('clearBranding failed', e); }
+        }
+
+        function updateStaleIndicator() {
+            const el = document.getElementById('stale-indicator');
+            if (!el) return;
+            if (!coefficients || !coefficients.timestamp) {
+                el.className = 'stale-indicator unknown';
+                el.textContent = 'Unknown';
+                return;
+            }
+            const ts = Date.parse(coefficients.timestamp);
+            if (isNaN(ts)) {
+                el.className = 'stale-indicator unknown';
+                el.textContent = 'Unknown';
+                return;
+            }
+            const ageDays = Math.floor((Date.now() - ts) / (1000*60*60*24));
+            if (ageDays <= 30) {
+                el.className = 'stale-indicator fresh';
+                el.textContent = `Fresh (${ageDays}d)`;
+            } else if (ageDays <= 90) {
+                el.className = 'stale-indicator stale';
+                el.textContent = `Stale (${ageDays}d)`;
+            } else {
+                el.className = 'stale-indicator expired';
+                el.textContent = `Expired (${ageDays}d)`;
+            }
+        }
+
+        async function applyCoefficients(parsed, persist=false) {
+            coefficients = parsed;
+            try { const verEl = document.getElementById('model-version'); if (verEl) verEl.textContent = coefficients.version ? `${coefficients.version} (${coefficients.timestamp||''})` : 'n/a'; } catch(e){}
+            try { updateStaleIndicator(); } catch(e) {}
+        }
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener("DOMContentLoaded", function() {
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
                 
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(tc => tc.classList.remove('active'));
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 
-                tab.classList.add('active');
+                this.classList.add('active');
                 document.getElementById(targetTab).classList.add('active');
             });
         });
 
-        // Form submission - Tab 1
-        document.getElementById('risk-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            try {
-                // Clear any previous errors
-                document.getElementById('error-banner').classList.remove('show');
-                
-                const age = parseInt(document.getElementById('age').value);
-                const bmi = parseInt(document.getElementById('bmi').value);
-                const sex = parseInt(document.getElementById('sex').value);
-                const asa = parseInt(document.getElementById('asa').value);
-                const procedure = parseInt(document.getElementById('procedure').value);
-                const or_time = parseInt(document.getElementById('or_time').value);
-                const los = parseInt(document.getElementById('los').value);
-                const dvt = parseInt(document.getElementById('dvt').value);
-                const pe_history = parseInt(document.getElementById('pe_history').value);
-                const conversion = parseInt(document.getElementById('conversion').value);
-                const icu = parseInt(document.getElementById('icu').value);
-                const pna = parseInt(document.getElementById('pna').value);
-                const transfusion = parseInt(document.getElementById('transfusion').value);
-                const immunosupp = parseInt(document.getElementById('immunosupp').value);
-
-                let lp = validateCoefficient('_cons', 'Intercept');
-                let debug = [`Intercept: ${COEFS['_cons'].toFixed(6)}`];
-
-                // Age categories (1=<40, 2=40-49 ref, 3=50-59, 4=60-69, 5=≥70)
-                if (age === 1) {
-                    const coef = validateCoefficient('1.age_cat', 'Age <40');
-                    lp += coef;
-                    debug.push(`Age <40: ${coef.toFixed(6)}`);
-                } else if (age === 2) {
-                    debug.push(`Age 40-49 (reference): 0.000000`);
-                } else if (age === 3) {
-                    const coef = validateCoefficient('3.age_cat', 'Age 50-59');
-                    lp += coef;
-                    debug.push(`Age 50-59: ${coef.toFixed(6)}`);
-                } else if (age === 4) {
-                    const coef = validateCoefficient('4.age_cat', 'Age 60-69');
-                    lp += coef;
-                    debug.push(`Age 60-69: ${coef.toFixed(6)}`);
-                } else if (age === 5) {
-                    const coef = validateCoefficient('5.age_cat', 'Age ≥70');
-                    lp += coef;
-                    debug.push(`Age ≥70: ${coef.toFixed(6)}`);
+        // If opened with a hash (e.g. index.html#ed-visit), activate that tab content
+        try {
+            const initial = (location.hash || '').replace('#', '');
+            if (initial) {
+                const targetTabEl = document.querySelector(`.tab[data-tab="${initial}"]`);
+                if (targetTabEl) {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    targetTabEl.classList.add('active');
+                    const content = document.getElementById(initial);
+                    if (content) content.classList.add('active');
                 }
-
-                // BMI categories (1=<35, 2=35-44.9 ref, 3=45-54.9, 4=55-64.9, 5=≥65)
-                if (bmi === 1) {
-                    const coef = validateCoefficient('1.bmi_cat', 'BMI <35');
-                    lp += coef;
-                    debug.push(`BMI <35: ${coef.toFixed(6)}`);
-                } else if (bmi === 2) {
-                    debug.push(`BMI 35-44.9 (reference): 0.000000`);
-                } else if (bmi === 3) {
-                    const coef = validateCoefficient('3.bmi_cat', 'BMI 45-54.9');
-                    lp += coef;
-                    debug.push(`BMI 45-54.9: ${coef.toFixed(6)}`);
-                } else if (bmi === 4) {
-                    const coef = validateCoefficient('4.bmi_cat', 'BMI 55-64.9');
-                    lp += coef;
-                    debug.push(`BMI 55-64.9: ${coef.toFixed(6)}`);
-                } else if (bmi === 5) {
-                    const coef = validateCoefficient('5.bmi_cat', 'BMI ≥65');
-                    lp += coef;
-                    debug.push(`BMI ≥65: ${coef.toFixed(6)}`);
-                }
-
-                // Sex (1=Male ref, 2=Female)
-                if (sex === 1) {
-                    debug.push(`Male (reference): 0.000000`);
-                } else if (sex === 2) {
-                    const coef = validateCoefficient('2.sex2', 'Female');
-                    lp += coef;
-                    debug.push(`Female: ${coef.toFixed(6)}`);
-                }
-
-                // ASA (1=I-II ref, 2=III, 3=IV-V)
-                if (asa === 1) {
-                    debug.push(`ASA I-II (reference): 0.000000`);
-                } else if (asa === 2) {
-                    const coef = validateCoefficient('2.asa2', 'ASA III');
-                    lp += coef;
-                    debug.push(`ASA III: ${coef.toFixed(6)}`);
-                } else if (asa === 3) {
-                    const coef = validateCoefficient('3.asa2', 'ASA IV-V');
-                    lp += coef;
-                    debug.push(`ASA IV-V: ${coef.toFixed(6)}`);
-                }
-
-                // Procedure (1=Sleeve ref, 2=RYGB, 3=DS/SADI)
-                if (procedure === 1) {
-                    debug.push(`Sleeve (reference): 0.000000`);
-                } else if (procedure === 2) {
-                    const coef = validateCoefficient('2.final_anatomy_cat', 'RYGB');
-                    lp += coef;
-                    debug.push(`RYGB: ${coef.toFixed(6)}`);
-                } else if (procedure === 3) {
-                    const coef = validateCoefficient('3.final_anatomy_cat', 'Other');
-                    lp += coef;
-                    debug.push(`Other: ${coef.toFixed(6)}`);
-                }
-
-                // OR Time (1=<60, 2=60-90 ref, 3=90-120, 4=120-150, 5=≥150)
-                if (or_time === 1) {
-                    const coef = validateCoefficient('1.or_cat', 'OR <60');
-                    lp += coef;
-                    debug.push(`OR <60: ${coef.toFixed(6)}`);
-                } else if (or_time === 2) {
-                    debug.push(`OR 60-90 (reference): 0.000000`);
-                } else if (or_time === 3) {
-                    const coef = validateCoefficient('3.or_cat', 'OR 90-120');
-                    lp += coef;
-                    debug.push(`OR 90-120: ${coef.toFixed(6)}`);
-                } else if (or_time === 4) {
-                    const coef = validateCoefficient('4.or_cat', 'OR 120-150');
-                    lp += coef;
-                    debug.push(`OR 120-150: ${coef.toFixed(6)}`);
-                } else if (or_time === 5) {
-                    const coef = validateCoefficient('5.or_cat', 'OR ≥150');
-                    lp += coef;
-                    debug.push(`OR ≥150: ${coef.toFixed(6)}`);
-                }
-
-                // LOS (0=0-1 ref, 1=2, 2=3-4, 3=≥5)
-                if (los === 0) {
-                    debug.push(`LOS 0-1 (reference): 0.000000`);
-                } else if (los === 1) {
-                    const coef = validateCoefficient('1.los_cat', 'LOS 2');
-                    lp += coef;
-                    debug.push(`LOS 2: ${coef.toFixed(6)}`);
-                } else if (los === 2) {
-                    const coef = validateCoefficient('2.los_cat', 'LOS 3-4');
-                    lp += coef;
-                    debug.push(`LOS 3-4: ${coef.toFixed(6)}`);
-                } else if (los === 3) {
-                    const coef = validateCoefficient('3.los_cat', 'LOS ≥5');
-                    lp += coef;
-                    debug.push(`LOS ≥5: ${coef.toFixed(6)}`);
-                }
-
-                // DVT (1=No ref, 2=Yes)
-                if (dvt === 1) {
-                    // No DVT History (reference): coefficient = 0
-                    debug.push(`No DVT History (reference): 0.000000`);
-                } else if (dvt === 2) {
-                    const coef = validateCoefficient('2.HISTORY_DVT_cat', 'History DVT');
-                    lp += coef;
-                    debug.push(`History DVT: ${coef.toFixed(6)}`);
-                }
-
-                // PE History (1=No ref, 2=Yes)
-                if (pe_history === 1) {
-                    // No PE History (reference): coefficient = 0
-                    debug.push(`No PE History (reference): 0.000000`);
-                } else if (pe_history === 2) {
-                    const coef = validateCoefficient('2.HISTORY_PE_cat', 'History PE');
-                    lp += coef;
-                    debug.push(`History PE: ${coef.toFixed(6)}`);
-                }
-
-                // Conversion (0=No ref, 1=Yes)
-                if (conversion === 0) {
-                    // No Conversion (reference): coefficient = 0
-                    debug.push(`No Conversion (reference): 0.000000`);
-                } else if (conversion === 1) {
-                    const coef = validateCoefficient('1.conversion_case', 'Conversion');
-                    lp += coef;
-                    debug.push(`Conversion: ${coef.toFixed(6)}`);
-                }
-
-                // ICU (0=No ref, 1=Yes)
-                if (icu === 0) {
-                    // No ICU (reference): coefficient = 0
-                    debug.push(`No ICU (reference): 0.000000`);
-                } else if (icu === 1) {
-                    const coef = validateCoefficient('1.icu_inhosp', 'ICU');
-                    lp += coef;
-                    debug.push(`ICU: ${coef.toFixed(6)}`);
-                }
-
-                // Pneumonia (0=No ref, 1=Yes)
-                if (pna === 0) {
-                    // No Pneumonia (reference): coefficient = 0
-                    debug.push(`No Pneumonia (reference): 0.000000`);
-                } else if (pna === 1) {
-                    const coef = validateCoefficient('1.pna_inhosp', 'Pneumonia');
-                    lp += coef;
-                    debug.push(`Pneumonia: ${coef.toFixed(6)}`);
-                }
-
-                // Transfusion (0=No ref, 1=Yes)
-                if (transfusion === 0) {
-                    // No Transfusion (reference): coefficient = 0
-                    debug.push(`No Transfusion (reference): 0.000000`);
-                } else if (transfusion === 1) {
-                    const coef = validateCoefficient('1.transf_inhosp', 'Transfusion');
-                    lp += coef;
-                    debug.push(`Transfusion: ${coef.toFixed(6)}`);
-                }
-
-                // Immunosuppression (0=No, 1=Yes)
-                if (immunosupp === 1) {
-                    const coef = validateCoefficient('immu_b', 'Immunosuppression');
-                    lp += coef;
-                    debug.push(`Immunosuppression: ${coef.toFixed(6)}`);
-                } else {
-                    debug.push(`No Immunosuppression: 0.000000`);
-                }
-
-                debug.push(`\nLinear Predictor (LP): ${lp.toFixed(6)}`);
-
-                // Calculate probability
-                const prob = 1 / (1 + Math.exp(-lp));
-                const riskPercent = (prob * 100).toFixed(2);
-                
-                debug.push(`Predicted Probability: ${prob.toFixed(8)}`);
-                debug.push(`Risk Percentage: ${riskPercent}%`);
-
-                // Determine category with corrected thresholds
-                let category, categoryClass, categoryText;
-                
-                if (prob >= 0.008) { // ≥0.80%
-                    category = 'Very High Risk';
-                    categoryClass = 'risk-very-high';
-                    categoryText = `Very High Risk (≥0.80%)`;
-                } else if (prob >= 0.004) { // 0.40-0.79%
-                    category = 'High Risk';
-                    categoryClass = 'risk-high';
-                    categoryText = `High Risk (0.40-0.79%)`;
-                } else if (prob >= 0.002) { // 0.20-0.39%
-                    category = 'Moderate Risk';
-                    categoryClass = 'risk-moderate';
-                    categoryText = `Moderate Risk (0.20-0.39%)`;
-                } else { // <0.20%
-                    category = 'Low Risk';
-                    categoryClass = 'risk-low';
-                    categoryText = `Low Risk (<0.20%)`;
-                }
-
-                // Display results
-                document.getElementById('risk-value').textContent = riskPercent + '%';
-                
-                // Frequency display (handle rare events)
-                if (prob < 0.001) {
-                    document.getElementById('frequency').textContent = 'Rare event (<0.1%)';
-                } else {
-                    const frequency = Math.round(1 / prob);
-                    document.getElementById('frequency').textContent = `(Approximately 1 in ${frequency} patients)`;
-                }
-                
-                const categoryDiv = document.getElementById('risk-category');
-                categoryDiv.textContent = categoryText;
-                categoryDiv.className = 'risk-category ' + categoryClass;
-
-                document.getElementById('debug-panel').innerHTML = '<strong>Debug Output:</strong><br>' + debug.join('<br>');
-                document.getElementById('results').classList.add('show');
-                
-                // Scroll to results
-                document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                
-            } catch (error) {
-                console.error('Calculation error:', error);
-                showError('Calculation failed: ' + error.message);
             }
-        });
+        } catch (e) { console.debug('hash activation skipped', e); }
 
-        // Form submission - Tab 2 (ED Visit) - Updated for Table 4 Step 2a/2b Logic
+        // Try to show repo-provided logo if available (common paths)
+        (function showRepoLogo(){
+            try {
+                const img = document.getElementById('repo-logo');
+                const svg = document.getElementById('default-logo');
+                if (!img) return;
+                const tryLoad = async () => {
+                    const candidates = ['assets/brand/jefferson-banner.png','assets/logo.svg','assets/logo.png','assets/logo.webp'];
+                    for (const src of candidates) {
+                        try {
+                            await new Promise((resolve, reject) => {
+                                const tester = new Image();
+                                tester.onload = resolve;
+                                tester.onerror = reject;
+                                tester.src = src;
+                            });
+                            img.src = src;
+                            img.style.display = 'inline-block';
+                            if (svg) svg.style.display = 'none';
+                            return;
+                        } catch (e) {
+                            // try next candidate
+                        }
+                    }
+                    img.style.display = 'none';
+                };
+                tryLoad();
+            } catch (e) { console.debug('Logo check failed', e); }
+        })();
+
+        // Coefficients variable is now global (declared above in admin section)
+
+        async function loadCoefficients() {
+            try {
+                // Disable submit buttons until coefficients are loaded
+                document.querySelectorAll('button[type="submit"]').forEach(b => b.disabled = true);
+                const res = await fetch('coefficients.json', {cache: 'no-store'});
+                if (!res || !res.ok) throw new Error(`Failed to load coefficients.json (${res ? res.status : 'network'})`);
+                coefficients = await res.json();
+
+                // Re-enable submit buttons
+                document.querySelectorAll('button[type="submit"]').forEach(b => b.disabled = false);
+                // Attach checksum verification if present
+                try {
+                    if (coefficients && coefficients.checksum) {
+                        // simple presence check; actual verification happens on download
+                        console.info('Checksum present for coefficients');
+                    }
+                } catch (e) { /* ignore */ }
+                // Update UI with version info if available
+                try {
+                    const verEl = document.getElementById('model-version');
+                    if (verEl && coefficients && coefficients.version) {
+                        const ts = coefficients.timestamp ? ` (${coefficients.timestamp})` : '';
+                        verEl.textContent = `${coefficients.version}${ts}`;
+                    } else if (verEl) {
+                        verEl.textContent = 'Unknown';
+                    }
+                    try { updateStaleIndicator(); } catch (e) { /* ignore */ }
+                } catch (e) { /* ignore */ }
+                console.info('Model coefficients loaded.');
+            } catch (err) {
+                console.error('Error loading coefficients:', err);
+                const dbg = document.getElementById('debug-content');
+                if (dbg) dbg.textContent = 'Error loading model coefficients.json — calculator disabled.';
+            }
+        }
+
+        // Start loading coefficients immediately
+        loadCoefficients();
+
+        // Remove legacy service workers and caches to keep the public app stateless.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(reg => reg.unregister()));
+                } catch (err) {
+                    console.warn('Service worker cleanup failed:', err);
+                }
+            });
+        }
+        if ('caches' in window) {
+            window.addEventListener('load', async () => {
+                try {
+                    const names = await caches.keys();
+                    await Promise.all(names.filter(name => name.startsWith('bariatric-pe-')).map(name => caches.delete(name)));
+                } catch (err) {
+                    console.warn('Cache cleanup failed:', err);
+                }
+            });
+        }
+
+        // Helpers for canonicalization and checksum (used to verify coefficients.json)
+        function canonicalize(obj) {
+            if (obj === null || typeof obj !== 'object') return obj;
+            if (Array.isArray(obj)) return obj.map(canonicalize);
+            const out = {};
+            Object.keys(obj).sort().forEach(k => { out[k] = canonicalize(obj[k]); });
+            return out;
+        }
+
+        async function computeSHA256Hex(str) {
+            try {
+                if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
+                    const encoder = new TextEncoder();
+                    const data = encoder.encode(str);
+                    const hash = await crypto.subtle.digest('SHA-256', data);
+                    const bytes = new Uint8Array(hash);
+                    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+                }
+            } catch (e) {
+                console.warn('SHA-256 compute failed', e);
+            }
+            return null;
+        }
+
+        // Main calculation -- delegate to model.js
+        const riskFormEl = document.getElementById('risk-form');
+        if (riskFormEl) {
+            riskFormEl.addEventListener('submit', function(e) {
+                console.log('risk-form submit handler invoked');
+            e.preventDefault();
+
+            // Disable submit while computing
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            if (!coefficients) {
+                const dbg = document.getElementById('debug-content');
+                if (dbg) dbg.textContent = 'Model coefficients not loaded yet.';
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            const inputs = {
+                age: parseInt(document.getElementById('age').value, 10),
+                bmi: parseFloat(document.getElementById('bmi').value),
+                sex: document.getElementById('sex').value,
+                asa: parseInt(document.getElementById('asa').value, 10),
+                procedure: document.getElementById('procedure').value,
+                orTime: parseInt(document.getElementById('or_time').value, 10),
+                los: parseInt(document.getElementById('los').value, 10),
+                history_dvt: document.getElementById('history_dvt').checked,
+                history_pe: document.getElementById('history_pe').checked,
+                immunosuppression: document.getElementById('immunosuppression').checked,
+                conversion: document.getElementById('conversion').checked,
+                transfusion: document.getElementById('transfusion').checked,
+                unplanned_icu: document.getElementById('unplanned_icu').checked,
+                pneumonia: document.getElementById('pneumonia').checked
+            };
+
+            let result = null;
+            try {
+                if (window.model && typeof window.model.calculateRisk === 'function') {
+                    result = window.model.calculateRisk(inputs, coefficients);
+                } else {
+                    throw new Error('Calculation module not available');
+                }
+            } catch (err) {
+                console.error('Risk calculation error:', err);
+                const dbg = document.getElementById('debug-content');
+                if (dbg) dbg.textContent = 'Error during risk calculation. See console.';
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
+            // Render results
+            const percentageText = Number.isFinite(result.percentage) ? result.percentage.toFixed(3) + '%' : 'N/A';
+            document.getElementById('risk-percentage').textContent = percentageText;
+            document.getElementById('risk-category').textContent = result.category;
+            document.getElementById('risk-category').className = `risk-category ${result.categoryClass}`;
+            document.getElementById('natural-frequency').textContent = `Approximately 1 in ${result.oneInNText} patients (${result.per1000} per 1,000)`;
+
+            document.getElementById('debug-content').innerHTML = `
+                <strong>Linear Predictor:</strong> ${Number.isFinite(result.lp) ? result.lp.toFixed(6) : 'N/A'}<br>
+                <strong>Probability:</strong> ${Number.isFinite(result.prob) ? result.prob.toFixed(6) : 'N/A'}<br><br>
+                <strong>Categorization:</strong><br>
+                Age ${result.age} → Category ${result.ageCat}<br>
+                BMI ${result.bmi} → Category ${result.bmiCat}<br>
+                OR Time → Category ${result.orTime}<br>
+                LOS → Category ${result.los}<br><br>
+                <strong>Term Contributions:</strong><br>
+                ${result.terms.join('<br>')}
+            `;
+
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            // Re-enable submit button
+            if (submitBtn) submitBtn.disabled = false;
+            });
+        } else {
+            console.warn('risk-form element not found');
+        }
+
+        // ED Visit Assessment
         document.getElementById('ed-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const modifiers = document.querySelectorAll('input[name="ed-modifier"]:checked');
-            const modifierCount = modifiers.length;
+            const hasAnyModifier = 
+                document.getElementById('ed_history_dvt_pe').checked ||
+                document.getElementById('ed_bmi_50').checked ||
+                document.getElementById('ed_procedure').checked ||
+                document.getElementById('ed_immunosupp').checked ||
+                document.getElementById('ed_age_50').checked ||
+                document.getElementById('ed_conversion').checked;
+
+            const recDiv = document.getElementById('ed-recommendation');
             
-            // Show results section
-            document.getElementById('ed-results').classList.add('show');
-            document.getElementById('ed-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            
-            // Build modifier list text
-            const modifierNames = {
-                'history_dvt_pe': 'History of DVT or PE',
-                'bmi_50': 'BMI ≥50 kg/m²',
-                'ds_bypass': 'DS or Gastric Bypass',
-                'immunosuppression': 'Immunosuppression',
-                'age_50': 'Age ≥50 years',
-                'conversion': 'Conversion operation'
-            };
-            
-            if (modifierCount > 0) {
-                // STEP 2a: ANY high-risk modifiers present
-                document.getElementById('ed-step-2a').style.display = 'block';
-                document.getElementById('ed-step-2b').style.display = 'none';
-                
-                const modifierListText = Array.from(modifiers)
-                    .map(m => modifierNames[m.value])
-                    .join('; ');
-                
-                document.getElementById('ed-modifier-list').innerHTML = 
-                    `<strong>${modifierCount} high-risk modifier(s) identified:</strong> ${modifierListText}`;
-                
+            if (hasAnyModifier) {
+                recDiv.className = 'recommendation recommendation-strong';
+                recDiv.innerHTML = `
+                    <h3>⚠️ Step 2a: High-Risk Modifiers Present</h3>
+                    <p><strong>Interpretation:</strong> Significantly increased post-discharge PE risk due to presence of high-risk modifiers.</p>
+                    <p><strong>Recommendation:</strong> <strong>Strongly recommend extended thromboprophylaxis</strong></p>
+                    <ul style="margin: 10px 0 0 25px; line-height: 1.8;">
+                        <li>Consider therapeutic anticoagulation if no contraindications</li>
+                        <li>Duration: minimum 2-4 weeks, individualized based on clinical course</li>
+                        <li>Assess bleeding risk</li>
+                        <li>Close outpatient follow-up</li>
+                    </ul>
+                `;
             } else {
-                // STEP 2b: NO high-risk modifiers
-                document.getElementById('ed-step-2a').style.display = 'none';
-                document.getElementById('ed-step-2b').style.display = 'block';
+                recDiv.className = 'recommendation';
+                recDiv.innerHTML = `
+                    <h3>Step 2b: No Additional High-Risk Modifiers</h3>
+                    <p><strong>Interpretation:</strong> Absolute PE risk remains elevated (~1%) after ED visit or IV hydration requirement.</p>
+                    <p><strong>Recommendation:</strong> <strong>Consider extended thromboprophylaxis</strong></p>
+                    <ul style="margin: 10px 0 0 25px; line-height: 1.8;">
+                        <li>Shared decision-making with patient regarding benefits vs. bleeding risk</li>
+                        <li>If prescribed: typical duration 2 weeks</li>
+                        <li>Assess bleeding risk carefully</li>
+                        <li>Outpatient follow-up</li>
+                    </ul>
+                `;
             }
+            
+            recDiv.style.display = 'block';
+            recDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
 
-        // Form submission - Tab 3 (Major Complication)
+        // Complication Assessment
         document.getElementById('comp-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const indicators = document.querySelectorAll('input[name="comp-indicator"]:checked');
-            const indicatorCount = indicators.length;
+            const hasComplication = 
+                document.getElementById('comp_readmission').checked ||
+                document.getElementById('comp_reoperation').checked ||
+                document.getElementById('comp_sepsis').checked ||
+                document.getElementById('comp_infection').checked;
+
+            const recDiv = document.getElementById('comp-recommendation');
             
-            document.getElementById('comp-indicator-count').textContent = 
-                `${indicatorCount} high-risk indicator(s) present`;
-            
-            const recommendations = document.getElementById('comp-recommendations');
-            let recs = [
-                '<strong>Extended prophylaxis strongly recommended</strong> unless contraindicated by bleeding risk',
-                'Balance PE risk against bleeding risk daily',
-                'Consider hematology/vascular surgery consultation',
-                'Lower threshold for PE workup if any clinical suspicion',
-                'Continue prophylaxis until mobile and complications resolved (minimum 2-4 weeks post-discharge)',
-                'Close outpatient follow-up with prophylaxis reinforcement'
-            ];
-            
-            if (indicatorCount >= 2) {
-                recs.unshift('<strong style="color: #d6002a;">⚠️ VERY HIGH RISK - Multiple severe indicators present</strong>');
-                recs.push('Consider longer prophylaxis duration (4-6 weeks or until full mobility restored)');
-                recs.push('Multidisciplinary discussion recommended');
+            if (hasComplication) {
+                recDiv.className = 'recommendation recommendation-strong';
+                recDiv.innerHTML = `
+                    <h3>🚨 Severe Adverse Event Confirmed</h3>
+                    <p><strong>Interpretation:</strong> Sustained physiologic stress with prolonged thrombotic risk. These patients experience a fundamental change in their postoperative trajectory.</p>
+                    <p><strong>Recommendation:</strong> <strong>Extended thromboprophylaxis at discharge</strong></p>
+                    <ul style="margin: 10px 0 0 25px; line-height: 1.8;">
+                        <li><strong>Initiate or continue therapeutic anticoagulation</strong></li>
+                        <li>Duration: minimum 4-6 weeks, potentially longer based on severity</li>
+                        <li>Careful bleeding risk assessment (especially post-operative/septic patients)</li>
+                        <li>Close monitoring and follow-up</li>
+                        <li>Consider hematology consultation for complex cases</li>
+                    </ul>
+                    <div style="margin-top: 15px; padding: 10px; background: #fff; border-left: 3px solid #f44336;">
+                        <strong>Clinical Judgment Required:</strong> Balance thrombosis risk vs. bleeding risk, especially in patients with recent surgery, sepsis, or organ-space infection.
+                    </div>
+                `;
+            } else {
+                recDiv.className = 'recommendation';
+                recDiv.innerHTML = `
+                    <h3>No Severe Adverse Event Identified</h3>
+                    <p>If patient has not experienced any of the listed severe complications, use the <strong>"At Discharge"</strong> or <strong>"After ED Visit"</strong> tabs for appropriate risk assessment.</p>
+                `;
             }
             
-            recommendations.innerHTML = recs.map(r => `<li>${r}</li>`).join('');
-            
-            document.getElementById('comp-results').classList.add('show');
-            document.getElementById('comp-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            recDiv.style.display = 'block';
+            recDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
-    });
-
-        function toggleDisclaimers(e, tab) {
-              const disclaimers = document.getElementById(tab + '-disclaimers');
-              const button = e.target;
-
-                disclaimers.classList.toggle('show');
-
-              button.textContent = disclaimers.classList.contains('show')
-                ? 'Hide full disclaimers ▲'
-                : 'Show full disclaimers ▼';
-}
-
-
-        function toggleDebug(e) {
-              const panel = document.getElementById('debug-panel');
-              const button = e.target;
-
-              panel.classList.toggle('show');
-
-              button.textContent = panel.classList.contains('show')
-                ? 'Hide Debug Output'
-                : 'Show Debug Output';
-}
-function resetForm() {
-  document.getElementById('risk-form').reset();
-  document.getElementById('results').classList.remove('show');
-  document.getElementById('debug-panel').classList.remove('show');
-  document.getElementById('error-banner').classList.remove('show');
-
-  document.getElementById('risk-form').scrollIntoView({ behavior: 'smooth' });
-}
-
+    }); // End DOMContentLoaded
     </script>
 </body>
 </html>
