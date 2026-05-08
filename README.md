@@ -1,11 +1,12 @@
 # Bariatric PE Risk Calculator
 
-Public informational calculator for 30-day post-discharge pulmonary embolism risk after minimally invasive bariatric surgery, with event-triggered reassessment guidance for emergency visits and major complications.
+Public informational calculator for 30-day post-discharge pulmonary embolism risk after minimally invasive bariatric surgery, with a secondary VTE estimate and event-triggered reassessment guidance for emergency visits and major complications.
 
 ## What is included
 
 - Jefferson-branded static web interface
-- Discharge risk calculator
+- Discharge PE risk calculator
+- Secondary VTE estimate, defined as PE or DVT requiring therapy
 - ED visit reassessment guidance
 - Major complication reassessment guidance
 - Local coefficient file and browser-side calculation logic
@@ -39,7 +40,8 @@ Open `index.html` in a modern browser, or serve the folder as a static site.
 
 - `index.html`: main calculator UI
 - `model.js`: risk calculation logic
-- `coefficients.json`: model coefficients
+- `coefficients.json`: primary PE model coefficients
+- `vte_coefficients.json`: secondary VTE model coefficients
 - `manifest.json`: web app metadata
 - `sw.js`: no-op service worker
 - `assets/brand`: Jefferson brand assets used by the UI

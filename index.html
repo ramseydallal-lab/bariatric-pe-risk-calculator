@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Public informational bariatric PE risk calculator using MBSAQIP 2020-2024 data for discharge risk assessment and event-triggered reassessment guidance.">
+    <meta name="description" content="Public informational bariatric PE risk calculator using MBSAQIP 2020-2024 data for discharge risk assessment, secondary VTE estimation, and event-triggered reassessment guidance.">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; manifest-src 'self'; upgrade-insecure-requests">
     <meta name="referrer" content="no-referrer">
     <meta http-equiv="Permissions-Policy" content="accelerometer=(), autoplay=(), camera=(), display-capture=(), fullscreen=(self), geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()">
     <meta http-equiv="Cache-Control" content="no-store, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
-    <title>Bariatric PE Risk Calculator - Jefferson Health</title>
+    <title>Bariatric PE/VTE Risk Calculator - Jefferson Health</title>
     <meta name="theme-color" content="#1c366b">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -145,6 +145,37 @@
             color: var(--brand-start);
             text-align: center;
             margin: 20px 0;
+        }
+
+        .risk-output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 16px;
+            margin: 18px 0;
+        }
+
+        .risk-output-card {
+            background: white;
+            border: 1px solid var(--jh-line);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--jh-shadow-soft);
+        }
+
+        .risk-output-card h4 {
+            margin-bottom: 8px;
+            color: var(--jh-deep-blue);
+        }
+
+        .secondary-risk-display {
+            color: var(--jh-slate);
+        }
+
+        .risk-context {
+            color: var(--jh-text-soft);
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: center;
         }
 
         .risk-category {
@@ -571,7 +602,7 @@
                 <svg id="default-logo" class="logo" role="img" aria-label="Jefferson Health logo" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg" style="display:none;"></svg>
                 <div class="hero-kicker">Clinical decision support workspace</div>
                 <h1>Bariatric PE risk calculator</h1>
-                <p class="header-subtitle">Public informational decision support for 30-day post-discharge pulmonary embolism risk after minimally invasive bariatric surgery, plus event-triggered reassessment guidance.</p>
+                <p class="header-subtitle">Public informational decision support for 30-day post-discharge pulmonary embolism risk after minimally invasive bariatric surgery, with a secondary VTE estimate and event-triggered reassessment guidance.</p>
                 <p class="version">Model: <span id="model-version">Version (loading...)</span> <span id="stale-indicator" class="stale-indicator unknown" title="Coefficient freshness">Checking...</span> | MBSAQIP 2020-2024</p>
                 <div class="header-meta">
                     <div class="meta-chip"><span class="meta-chip-label">Primary use</span><span class="meta-chip-value">At discharge</span></div>
@@ -595,17 +626,17 @@
         <div class="tab-content active" id="discharge">
             <div class="disclaimer">
                 <strong>⚠️ Clinical Decision Support Only</strong><br>
-                This calculator provides risk estimates based on MBSAQIP data (2020-2024) for post-discharge PE within 30 days after minimally invasive bariatric surgery. Results should inform, not replace, clinical judgment. <strong>Public-use notice:</strong> Do not enter direct patient identifiers such as name, date of birth, medical record number, address, phone number, or free-text notes.
+                This calculator provides a primary post-discharge PE estimate and a secondary VTE estimate based on MBSAQIP data (2020-2024). Results should inform, not replace, clinical judgment. <strong>Public-use notice:</strong> Do not enter direct patient identifiers such as name, date of birth, medical record number, address, phone number, or free-text notes.
                 <span class="disclaimer-toggle" onclick="toggleDisclaimer()">View full disclaimers →</span>
                 <div class="disclaimer-full" id="full-disclaimer">
                     <strong>Model Scope/Population:</strong> Primary minimally invasive bariatric procedures (Sleeve, RYGB, DS/SADI) in adults ≥18 years. Not validated for open procedures, revisions, or non-bariatric surgery.<br><br>
-                    <strong>Outcome Definition:</strong> Post-discharge PE diagnosed through day 30 (MBSAQIP definition).<br><br>
+                    <strong>Outcome Definition:</strong> Primary endpoint is post-discharge PE diagnosed through day 30 (MBSAQIP definition). Secondary VTE estimate is PE or DVT requiring therapy.<br><br>
                     <strong>Temporal:</strong> Model trained on 2020-2024 data. Performance may degrade over time.<br><br>
                     <strong>Modeling/Statistical:</strong> Logistic regression with categorical bins. Individual predictions have uncertainty; population-level calibration expected.<br><br>
-                    <strong>Input Handling:</strong> Age bins (<30, 30-39, 40-49*, 50-59, 60-69, ≥70); BMI bins (<30, 30-39, 40-49*, 50-59, 60-69, ≥70); OR Time (<60, 60-120*, 120-180, >180 min); LOS (0, 1*, 2, 3, 4, 5, 6, 7, ≥8 days). *Reference categories.<br><br>
+                    <strong>Input Handling:</strong> Age bins (&lt;40, 40-49*, 50-59, 60-69, ≥70); BMI bins (&lt;35, 35-44.9*, 45-54.9, 55-64.9, ≥65); OR Time (&lt;60, 60-90*, 90-120, 120-150, ≥150 min); LOS (0-1*, 2, 3-4, ≥5 days). *Reference categories.<br><br>
                     <strong>Clinical Action:</strong> Risk estimates should be integrated with patient preferences, contraindications, and bleeding risk. Not prescriptive.<br><br>
                     <strong>Bleeding Risk Not Modeled:</strong> Extended thromboprophylaxis carries bleeding risk not captured here. Individualized assessment required.<br><br>
-                    <strong>Comparative/Baseline:</strong> Population baseline PE rate ~0.4%. Individual risk varies widely.<br><br>
+                    <strong>Comparative/Baseline:</strong> PE and VTE estimates are displayed separately because their absolute risks are not interchangeable. Individual risk varies widely.<br><br>
                     <strong>Regulatory/Legal:</strong> For research and decision support only. Not FDA-cleared. Clinicians retain full responsibility.<br><br>
                     <strong>Data Source:</strong> MBSAQIP 2020-2024 participating centers. Responsibility: Clinician using this tool.
                 </div>
@@ -633,12 +664,9 @@
                 <div class="form-group">
                     <label for="asa">ASA Class</label>
                     <select id="asa" name="asa">
-                        <option value="1">ASA I (Healthy)</option>
-                        <option value="2">ASA II (Mild systemic disease)</option>
-                        <option value="3" selected>ASA III (Severe systemic disease)</option>
-                        <option value="4">ASA IV (Life-threatening)</option>
-                        <option value="5">ASA V (Moribund)</option>
-                        <option value="6">ASA Unknown</option>
+                        <option value="1">ASA I-II</option>
+                        <option value="2" selected>ASA III</option>
+                        <option value="3">ASA IV-V</option>
                     </select>
                 </div>
 
@@ -655,24 +683,20 @@
                     <label for="or_time">Operative Time (minutes)</label>
                     <select id="or_time" name="or_time">
                         <option value="1">&lt; 60 minutes</option>
-                        <option value="2" selected>60-120 minutes</option>
-                        <option value="3">120-180 minutes</option>
-                        <option value="4">&gt; 180 minutes</option>
+                        <option value="2" selected>60-90 minutes</option>
+                        <option value="3">90-120 minutes</option>
+                        <option value="4">120-150 minutes</option>
+                        <option value="5">≥150 minutes</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="los">Length of Stay (days)</label>
                     <select id="los" name="los">
-                        <option value="0">0 days (same-day discharge)</option>
-                        <option value="1">1 day</option>
-                        <option value="2" selected>2 days</option>
-                        <option value="3">3 days</option>
-                        <option value="4">4 days</option>
-                        <option value="5">5 days</option>
-                        <option value="6">6 days</option>
-                        <option value="7">7 days</option>
-                        <option value="8">7+ days</option>
+                        <option value="0">0-1 days</option>
+                        <option value="1" selected>2 days</option>
+                        <option value="2">3-4 days</option>
+                        <option value="3">≥5 days</option>
                     </select>
                 </div>
 
@@ -716,7 +740,19 @@
 
             <div id="results" class="results" style="display: none;" aria-live="polite">
                 <h3>Risk Assessment</h3>
-                <div class="risk-display" id="risk-percentage">-</div>
+                <div class="risk-output-grid">
+                    <div class="risk-output-card">
+                        <h4>Primary PE estimate</h4>
+                        <div class="risk-display" id="risk-percentage">-</div>
+                        <div class="risk-context" id="pe-natural-frequency">-</div>
+                    </div>
+                    <div class="risk-output-card">
+                        <h4>Secondary VTE estimate</h4>
+                        <div class="risk-display secondary-risk-display" id="vte-percentage">-</div>
+                        <div class="risk-context" id="vte-natural-frequency">-</div>
+                        <p class="risk-context">VTE = PE or DVT requiring therapy. PE remains the primary modeled endpoint.</p>
+                    </div>
+                </div>
                 <div class="risk-category" id="risk-category">-</div>
                 <div class="natural-frequency" id="natural-frequency">-</div>
                 
@@ -866,6 +902,7 @@
         const adminToggle = document.getElementById('admin-toggle');
         let adminPanel = null;
         let coefficients = null;  // Moved to global scope
+        let vteCoefficients = null;
 
         function createAdminPanel() {
             if (adminPanel) return adminPanel;
@@ -1234,6 +1271,9 @@
                 const res = await fetch('coefficients.json', {cache: 'no-store'});
                 if (!res || !res.ok) throw new Error(`Failed to load coefficients.json (${res ? res.status : 'network'})`);
                 coefficients = await res.json();
+                const vteRes = await fetch('vte_coefficients.json', {cache: 'no-store'});
+                if (!vteRes || !vteRes.ok) throw new Error(`Failed to load vte_coefficients.json (${vteRes ? vteRes.status : 'network'})`);
+                vteCoefficients = await vteRes.json();
 
                 // Re-enable submit buttons
                 document.querySelectorAll('button[type="submit"]').forEach(b => b.disabled = false);
@@ -1323,7 +1363,7 @@
             const submitBtn = this.querySelector('button[type="submit"]');
             if (submitBtn) submitBtn.disabled = true;
 
-            if (!coefficients) {
+            if (!coefficients || !vteCoefficients) {
                 const dbg = document.getElementById('debug-content');
                 if (dbg) dbg.textContent = 'Model coefficients not loaded yet.';
                 if (submitBtn) submitBtn.disabled = false;
@@ -1348,9 +1388,11 @@
             };
 
             let result = null;
+            let vteResult = null;
             try {
                 if (window.model && typeof window.model.calculateRisk === 'function') {
                     result = window.model.calculateRisk(inputs, coefficients);
+                    vteResult = window.model.calculateRisk(inputs, vteCoefficients);
                 } else {
                     throw new Error('Calculation module not available');
                 }
@@ -1364,21 +1406,31 @@
 
             // Render results
             const percentageText = Number.isFinite(result.percentage) ? result.percentage.toFixed(3) + '%' : 'N/A';
+            const vtePercentageText = Number.isFinite(vteResult.percentage) ? vteResult.percentage.toFixed(3) + '%' : 'N/A';
             document.getElementById('risk-percentage').textContent = percentageText;
+            document.getElementById('vte-percentage').textContent = vtePercentageText;
             document.getElementById('risk-category').textContent = result.category;
             document.getElementById('risk-category').className = `risk-category ${result.categoryClass}`;
-            document.getElementById('natural-frequency').textContent = `Approximately 1 in ${result.oneInNText} patients (${result.per1000} per 1,000)`;
+            const peFrequency = `Approximately 1 in ${result.oneInNText} patients (${result.per1000} per 1,000)`;
+            const vteFrequency = `Approximately 1 in ${vteResult.oneInNText} patients (${vteResult.per1000} per 1,000)`;
+            document.getElementById('natural-frequency').textContent = `Primary PE estimate: ${peFrequency}`;
+            document.getElementById('pe-natural-frequency').textContent = peFrequency;
+            document.getElementById('vte-natural-frequency').textContent = vteFrequency;
 
             document.getElementById('debug-content').innerHTML = `
-                <strong>Linear Predictor:</strong> ${Number.isFinite(result.lp) ? result.lp.toFixed(6) : 'N/A'}<br>
-                <strong>Probability:</strong> ${Number.isFinite(result.prob) ? result.prob.toFixed(6) : 'N/A'}<br><br>
+                <strong>Primary PE Linear Predictor:</strong> ${Number.isFinite(result.lp) ? result.lp.toFixed(6) : 'N/A'}<br>
+                <strong>Primary PE Probability:</strong> ${Number.isFinite(result.prob) ? result.prob.toFixed(6) : 'N/A'}<br>
+                <strong>Secondary VTE Linear Predictor:</strong> ${Number.isFinite(vteResult.lp) ? vteResult.lp.toFixed(6) : 'N/A'}<br>
+                <strong>Secondary VTE Probability:</strong> ${Number.isFinite(vteResult.prob) ? vteResult.prob.toFixed(6) : 'N/A'}<br><br>
                 <strong>Categorization:</strong><br>
                 Age ${result.age} → Category ${result.ageCat}<br>
                 BMI ${result.bmi} → Category ${result.bmiCat}<br>
                 OR Time → Category ${result.orTime}<br>
                 LOS → Category ${result.los}<br><br>
-                <strong>Term Contributions:</strong><br>
+                <strong>Primary PE Term Contributions:</strong><br>
                 ${result.terms.join('<br>')}
+                <br><br><strong>Secondary VTE Term Contributions:</strong><br>
+                ${vteResult.terms.join('<br>')}
             `;
 
             document.getElementById('results').style.display = 'block';

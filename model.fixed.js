@@ -1,20 +1,18 @@
-// model.fixed.js - canonical ES module for PE risk calculation
+// model.js - canonical ES module for PE risk calculation
 export function categorizeBMI(bmi) {
-  if (bmi < 30) return 1;
-  if (bmi < 40) return 2;
-  if (bmi < 50) return 3;
-  if (bmi < 60) return 4;
-  if (bmi < 70) return 5;
-  return 6;
+  if (bmi < 35) return 1;
+  if (bmi < 45) return 2;
+  if (bmi < 55) return 3;
+  if (bmi < 65) return 4;
+  return 5;
 }
 
 export function categorizeAge(age) {
-  if (age < 30) return 1;
-  if (age < 40) return 2;
-  if (age < 50) return 3;
-  if (age < 60) return 4;
-  if (age < 70) return 5;
-  return 6;
+  if (age < 40) return 1;
+  if (age < 50) return 2;
+  if (age < 60) return 3;
+  if (age < 70) return 4;
+  return 5;
 }
 
 export function stableLogistic(lp) {
@@ -31,14 +29,14 @@ export function stableLogistic(lp) {
 export function riskCategory(prob) {
   let category = 'Low Risk';
   let categoryClass = 'risk-low';
-  if (prob >= 0.006) {
+  if (prob >= 0.008) {
     category = 'Very High Risk';
     categoryClass = 'risk-very-high';
-  } else if (prob >= 0.003) {
+  } else if (prob >= 0.004) {
     category = 'High Risk';
     categoryClass = 'risk-high';
-  } else if (prob >= 0.001) {
-    category = 'Elevated Risk';
+  } else if (prob >= 0.002) {
+    category = 'Moderate Risk';
     categoryClass = 'risk-elevated';
   }
   return { category, categoryClass };
@@ -185,7 +183,8 @@ export function calculateRisk(inputs, coefficients) {
 
   return {
     lp, prob, percentage, category, categoryClass, terms,
-    ageCat, bmiCat, age, bmi, orTime, los, oneInNText, per1000
+    ageCat, bmiCat, age, bmi, orTime, los, oneInNText, per1000,
+    outcome: coefficients.outcome || 'PE'
   };
 }
 

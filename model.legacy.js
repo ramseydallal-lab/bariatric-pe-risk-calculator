@@ -2,21 +2,19 @@
    Attaches `window.model.calculateRisk(...)` and helpers so the page works when ES modules aren't available. */
 (function(global){
   function categorizeBMI(bmi) {
-    if (bmi < 30) return 1;
-    if (bmi < 40) return 2;
-    if (bmi < 50) return 3;
-    if (bmi < 60) return 4;
-    if (bmi < 70) return 5;
-    return 6;
+    if (bmi < 35) return 1;
+    if (bmi < 45) return 2;
+    if (bmi < 55) return 3;
+    if (bmi < 65) return 4;
+    return 5;
   }
 
   function categorizeAge(age) {
-    if (age < 30) return 1;
-    if (age < 40) return 2;
-    if (age < 50) return 3;
-    if (age < 60) return 4;
-    if (age < 70) return 5;
-    return 6;
+    if (age < 40) return 1;
+    if (age < 50) return 2;
+    if (age < 60) return 3;
+    if (age < 70) return 4;
+    return 5;
   }
 
   function stableLogistic(lp) {
@@ -32,9 +30,9 @@
 
   function riskCategory(prob) {
     var category = 'Low Risk', categoryClass = 'risk-low';
-    if (prob >= 0.006) { category = 'Very High Risk'; categoryClass = 'risk-very-high'; }
-    else if (prob >= 0.003) { category = 'High Risk'; categoryClass = 'risk-high'; }
-    else if (prob >= 0.001) { category = 'Elevated Risk'; categoryClass = 'risk-elevated'; }
+    if (prob >= 0.008) { category = 'Very High Risk'; categoryClass = 'risk-very-high'; }
+    else if (prob >= 0.004) { category = 'High Risk'; categoryClass = 'risk-high'; }
+    else if (prob >= 0.002) { category = 'Moderate Risk'; categoryClass = 'risk-elevated'; }
     return {category: category, categoryClass: categoryClass};
   }
 
@@ -99,7 +97,8 @@
     if (prob > 0 && Number.isFinite(prob)) { var oneInN = Math.round(1 / prob); oneInNText = oneInN.toLocaleString(); per1000 = Math.round(prob * 1000); }
 
     return { lp: lp, prob: prob, percentage: percentage, category: cat.category, categoryClass: cat.categoryClass, terms: terms,
-             ageCat: ageCat, bmiCat: bmiCat, age: age, bmi: bmi, orTime: orTime, los: los, oneInNText: oneInNText, per1000: per1000 };
+             ageCat: ageCat, bmiCat: bmiCat, age: age, bmi: bmi, orTime: orTime, los: los, oneInNText: oneInNText, per1000: per1000,
+             outcome: coefficients.outcome || 'PE' };
   }
 
   global.model = global.model || {};
